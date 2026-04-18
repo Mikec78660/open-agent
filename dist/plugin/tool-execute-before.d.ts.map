@@ -1,0 +1,1 @@
+{"version":3,"file":"tool-execute-before.d.ts","sourceRoot":"","sources":["../../src/plugin/tool-execute-before.ts"],"names":[],"mappings":"AAMA,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,iBAAiB,CAAC;AACrD,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,iBAAiB,CAAC;AAEpD,wBAAgB,8BAA8B,CAAC,IAAI,EAAE;IACnD,GAAG,EAAE,aAAa,CAAC;IACnB,KAAK,EAAE,YAAY,CAAC;CACrB,IACe,OAAO,OAAO,EAAE,QAAQ,OAAO,mBAG9C"}

@@ -1,0 +1,60 @@
+// create-tools.ts
+//  [Descriptive explanation of what the code in the file does. List dependencies here.]
+//  
+//  Created on: Fri Apr 17 2026
+//      Author: GPU-Server/Qwen3.6-35B-A3B-Q8_0
+import type { ToolDefinition, Plugin } from "@opencode-ai/plugin";
+
+import { createDelegateTask } from "./tools/delegate-task";
+import { createCommandsTool } from "./tools/commands";
+import { createSkillTool } from "./tools/skill/tools";
+import { discoverCommandsSync } from "./tools/slashcommand/command-discovery";
+import { loadBuiltinCommands, type BuiltinCommands } from "./features/builtin-commands/commands";
+import type { PluginContext } from "./plugin/types";
+import type { OpenAgentConfig } from "./config/schema/open-agent-config";
+import { log } from "./shared/logger";
+
+export type CreateToolsResult = {
+  filteredTools: Record<string, ToolDefinition>;
+  builtinCommands: BuiltinCommands;
+};
+
+export async function createTools(args: {
+  ctx: PluginContext;
+  pluginConfig: OpenAgentConfig;
+}): Promise<CreateToolsResult> {
+  const { ctx, pluginConfig } = args;
+
+  log("[createTools] Creating tools...");
+
+  // Create the delegate-task tool which is the main task tool
+  const delegateTask = createDelegateTask({
+    directory: ctx.directory,
+    availableAgents: [],
+    availableSkills: [],
+    userCategories: {},
+  });
+
+  // Load builtin commands from the plugin
+  const builtinCommands = loadBuiltinCommands();
+
+  // Discover all commands for the skill tool (used for / dropdown)
+  const discoveredCommands = discoverCommandsSync(ctx.directory);
+
+  // Create a simple tool registry
+  const commandsTool = createCommandsTool();
+  const skillTool = createSkillTool({ commands: discoveredCommands });
+  const allTools: Record<string, ToolDefinition> = {
+    task: delegateTask,
+    commands: commandsTool,
+    skill: skillTool,
+  };
+
+  log("[createTools] Created tools:", Object.keys(allTools));
+  log("[createTools] Loaded builtin commands:", Object.keys(builtinCommands));
+
+  return {
+    filteredTools: allTools,
+    builtinCommands,
+  };
+}

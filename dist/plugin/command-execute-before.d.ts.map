@@ -1,0 +1,1 @@
+{"version":3,"file":"command-execute-before.d.ts","sourceRoot":"","sources":["../../src/plugin/command-execute-before.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,iBAAiB,CAAC;AAGpD,wBAAgB,iCAAiC,CAAC,IAAI,EAAE;IACtD,KAAK,EAAE,YAAY,CAAC;CACrB,IAUe,OAAO,OAAO,EAAE,QAAQ,OAAO,KAAG,OAAO,CAAC,IAAI,CAAC,CAyB9D"}

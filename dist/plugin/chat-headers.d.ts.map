@@ -1,0 +1,1 @@
+{"version":3,"file":"chat-headers.d.ts","sourceRoot":"","sources":["../../src/plugin/chat-headers.ts"],"names":[],"mappings":"AAMA,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,iBAAiB,CAAC;AAGrD,wBAAgB,wBAAwB,CAAC,IAAI,EAAE;IAC7C,GAAG,EAAE,aAAa,CAAC;CACpB,IACe,OAAO,OAAO,EAAE,QAAQ,OAAO,mBAG9C"}

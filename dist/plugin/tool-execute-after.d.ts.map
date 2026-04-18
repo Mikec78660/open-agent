@@ -1,0 +1,1 @@
+{"version":3,"file":"tool-execute-after.d.ts","sourceRoot":"","sources":["../../src/plugin/tool-execute-after.ts"],"names":[],"mappings":"AAMA,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,iBAAiB,CAAC;AACrD,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,iBAAiB,CAAC;AAEpD,wBAAgB,6BAA6B,CAAC,IAAI,EAAE;IAClD,GAAG,EAAE,aAAa,CAAC;IACnB,KAAK,EAAE,YAAY,CAAC;CACrB,IACe,OAAO,OAAO,EAAE,QAAQ,OAAO,mBAG9C"}
