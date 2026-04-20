@@ -11,6 +11,7 @@ export declare const BuiltinCommandNameSchema: z.ZodEnum<{
     handoff: "handoff";
     "start-planning": "start-planning";
     "finish-interview": "finish-interview";
+    "execute-plan": "execute-plan";
 }>;
 export type BuiltinCommandName = z.infer<typeof BuiltinCommandNameSchema>;
 //# sourceMappingURL=commands.d.ts.map

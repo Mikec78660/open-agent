@@ -7,6 +7,7 @@ export * from "./librarian";
 export * from "./oracle";
 export * from "./prometheus";
 export * from "./designer";
+export * from "./athena";
 export * from "./sisyphus-junior";
 export * from "./validator";
 export * from "./hephaestus";

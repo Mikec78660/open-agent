@@ -5,6 +5,7 @@ import { createLibrarianAgent } from "./agents/librarian";
 import { createPrometheusAgent } from "./agents/prometheus";
 import { createOracleAgent } from "./agents/oracle";
 import { createDesignerAgent } from "./agents/designer";
+import { createAthenaAgent } from "./agents/athena";
 import { createSisyphusJuniorAgent } from "./agents/sisyphus-junior";
 import { createValidatorAgent } from "./agents/validator";
 import { createHephaestusAgent } from "./agents/hephaestus";
@@ -32,6 +33,7 @@ const OpenAgentPlugin = async (ctx: PluginContext) => {
     prometheus: createPrometheusAgent("anthropic/claude-sonnet-4-6"),
     oracle: createOracleAgent("anthropic/claude-sonnet-4-6"),
     designer: createDesignerAgent("anthropic/claude-sonnet-4-6"),
+    athena: createAthenaAgent("anthropic/claude-sonnet-4-6"),
     "sisyphus-junior": createSisyphusJuniorAgent("anthropic/claude-sonnet-4-6"),
     validator: createValidatorAgent("anthropic/claude-sonnet-4-6"),
     hephaestus: createHephaestusAgent("anthropic/claude-sonnet-4-6"),

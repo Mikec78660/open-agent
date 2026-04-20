@@ -19,6 +19,7 @@ import {
   HANDOFF_TEMPLATE,
   START_PLANNING_TEMPLATE,
   FINISH_INTERVIEW_TEMPLATE,
+  EXECUTE_PLAN_TEMPLATE,
 } from "./templates";
 
 export function loadBuiltinCommands(): BuiltinCommands {
@@ -143,6 +144,17 @@ export function loadBuiltinCommands(): BuiltinCommands {
         description: "(builtin) Complete Prometheus interview and transfer to Atlas coordinator",
         template: `<command-instruction>
   ${FINISH_INTERVIEW_TEMPLATE}
+  </command-instruction>
+  
+  <user-request>
+  $ARGUMENTS
+  </user-request>`,
+      },
+      "execute-plan": {
+        name: "execute-plan",
+        description: "(builtin) Execute Prometheus plan as Atlas agent",
+        template: `<command-instruction>
+  ${EXECUTE_PLAN_TEMPLATE}
   </command-instruction>`,
       },
     };

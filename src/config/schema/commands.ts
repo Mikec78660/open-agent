@@ -17,6 +17,7 @@ export const BuiltinCommandNameSchema = z.enum([
   "handoff",
   "start-planning",
   "finish-interview",
+  "execute-plan",
 ]);
 
 export type BuiltinCommandName = z.infer<typeof BuiltinCommandNameSchema>;

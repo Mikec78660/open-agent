@@ -26,6 +26,15 @@ export function createCommandExecuteBeforeHandler(args: {
         return;
       }
 
+      const hasCommandInstruction = cmdOutput.parts.some(
+        (p) => p.type === "text" && p.text.includes("<command-instruction>")
+      );
+
+      if (hasCommandInstruction) {
+        log("[command.execute.before] Skipping injection - already present for:", commandName);
+        return;
+      }
+
       log("[command.execute.before] Injecting template for:", commandName);
 
     const taggedContent = `<command-instruction>\n${command.template}\n</command-instruction>`;

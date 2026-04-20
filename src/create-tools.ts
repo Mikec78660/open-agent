@@ -5,7 +5,6 @@
 //      Author: GPU-Server/Qwen3.6-35B-A3B-Q8_0
 import type { ToolDefinition, Plugin } from "@opencode-ai/plugin";
 
-import { createDelegateTask } from "./tools/delegate-task";
 import { createCommandsTool } from "./tools/commands";
 import { createSkillTool } from "./tools/skill/tools";
 import { discoverCommandsSync } from "./tools/slashcommand/command-discovery";
@@ -27,14 +26,6 @@ export async function createTools(args: {
 
   log("[createTools] Creating tools...");
 
-  // Create the delegate-task tool which is the main task tool
-  const delegateTask = createDelegateTask({
-    directory: ctx.directory,
-    availableAgents: [],
-    availableSkills: [],
-    userCategories: {},
-  });
-
   // Load builtin commands from the plugin
   const builtinCommands = loadBuiltinCommands();
 
@@ -45,7 +36,6 @@ export async function createTools(args: {
   const commandsTool = createCommandsTool();
   const skillTool = createSkillTool({ commands: discoveredCommands });
   const allTools: Record<string, ToolDefinition> = {
-    task: delegateTask,
     commands: commandsTool,
     skill: skillTool,
   };
