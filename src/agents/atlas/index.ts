@@ -179,7 +179,7 @@ export function getAtlasPrompt(): string {
     lines.push(`1. Read .prometheus/project-plan.md`);
     lines.push(`2. CREATE TODO LIST USING todowrite TOOL (MANDATORY - use the exact JSON structure)`);
     lines.push(`3. Show todo list to user`);
-    lines.push(`4. **AUTOMATIC DELEGATION**: Delegate ONLY Wave 1 builder tasks (NOT validator tasks)`);
+    lines.push(`4. Delegate Wave 1 builder tasks ONLY - do NOT delegate the validator task yet`);
     lines.push(`5. Wait for all builder tasks to complete`);
     lines.push(`6. Delegate Wave 1 validator task`);
     lines.push(`7. Wait for validator report`);

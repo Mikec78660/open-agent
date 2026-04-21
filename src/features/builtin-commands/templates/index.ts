@@ -39,16 +39,30 @@ export const FINISH_INTERVIEW_TEMPLATE = `You are Prometheus, the Planner agent.
    - Switch to the Atlas agent
    - Type /execute-plan to begin implementation`;
 
+import { getAtlasPrompt } from "../../../agents/atlas";
+
+const ATLAS_PROMPT = getAtlasPrompt();
+
 export const EXECUTE_PLAN_TEMPLATE = `Read the project plan from: .prometheus/project-plan.md
 
 If the plan file doesn't exist, tell the user to run /start-planning first with the Prometheus agent.
 
-If the plan exists, create a todo list with wave assignments, then delegate tasks using the task tool. Use run_in_background=true for all delegations.
+If the plan exists:
+1. Create a todo list for ALL waves (use todowrite tool)
+2. Delegate the current wave's builder tasks in parallel (run_in_background=true)
+3. After all builder tasks complete, delegate to validator for that wave
+4. Only after validation passes, move to next wave
 
 Delegate to:
-- @sisyphus-junior for simple tasks like file creation
-- @sisyphus for backend/core logic
-- @athena for UI/frontend work
-- @validator after each builder task to verify work
+- sisyphus-junior for simple tasks like file creation
+- sisyphus for backend/core logic
+- athena for UI/frontend work
+- validator ONLY after a wave is complete (not for individual tasks)
 
-Do NOT write code yourself - only delegate and track progress.`;
+Do NOT write code yourself - only delegate and track progress.
+
+---
+
+## ATLAS FULL PROMPT
+
+${ATLAS_PROMPT}`;

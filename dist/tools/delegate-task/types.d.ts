@@ -1,29 +1,28 @@
+export interface BackgroundTask {
+    id: string;
+    sessionID?: string;
+    parentSessionID: string;
+    description: string;
+    prompt: string;
+    agent: string;
+    status: "pending" | "running" | "completed" | "error" | "cancelled";
+    createdAt: Date;
+    startedAt?: Date;
+    completedAt?: Date;
+    error?: string;
+}
+export interface LaunchInput {
+    description: string;
+    prompt: string;
+    agent: string;
+    parentSessionID: string;
+    load_skills?: string[];
+}
 export interface DelegateTaskArgs {
-    load_skills: string[];
     description?: string;
     prompt: string;
+    subagent_type: string;
     run_in_background: boolean;
-    agent?: string;
-    session_id?: string;
-    command?: string;
-}
-export interface DelegateTaskToolOptions {
-    gitMasterConfig?: any;
-    browserProvider?: any;
-    disabledSkills?: string[];
-    directory: string;
-    availableAgents?: any[];
-    availableSkills?: any[];
-    userCategories?: Record<string, any>;
-}
-export interface BuildSystemContentInput {
-    skillContent?: string;
-    skillContents?: string[];
-    categoryPromptAppend?: string;
-    agentName: string;
-    maxPromptTokens?: number;
-    model?: any;
-    availableCategories?: any[];
-    availableSkills?: any[];
+    load_skills?: string[];
 }
 //# sourceMappingURL=types.d.ts.map

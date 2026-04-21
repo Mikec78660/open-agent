@@ -38,301 +38,6 @@ var __export = (target, all) => {
 };
 var __esm = (fn, res) => () => (fn && (res = fn(fn = 0)), res);
 
-// src/features/builtin-commands/templates/index.ts
-var INIT_DEEP_TEMPLATE = `(builtin) Initialize hierarchical AGENTS.md knowledge base`, RALPH_LOOP_TEMPLATE = `(builtin) Start self-referential development loop until completion`, ULW_LOOP_TEMPLATE = `(builtin) Start ultrawork loop - continues until completion with ultrawork mode`, CANCEL_RALPH_TEMPLATE = `(builtin) Cancel active Ralph Loop`, REFACTOR_TEMPLATE = `(builtin) Intelligent refactoring command with LSP, AST-grep, architecture analysis, and TDD verification.`, START_WORK_TEMPLATE = `(builtin) Start Sisyphus work session from Prometheus plan`, STOP_CONTINUATION_TEMPLATE = `(builtin) Stop all continuation mechanisms (ralph loop, todo continuation, boulder) for this session`, REMOVE_AI_SLOPS_TEMPLATE = `(builtin) Remove AI-generated code smells from branch changes and critically review the results`, HANDOFF_TEMPLATE = `(builtin) Create a detailed context summary for continuing work in a new session`, START_PLANNING_TEMPLATE = `You are Prometheus, the Planner agent. Your role is to help users plan new projects from scratch.
-
-If the user has NOT provided a project description (user-request is empty), ask them to describe their project idea, what they want to build, and any requirements they have.
-
-If the user HAS provided a project description, start the planning interview:
-1. Ask clarifying questions about the project to understand requirements
-2. Create a detailed work plan with task breakdowns
-3. Save the plan when complete
-
-Begin by checking if the user has provided a project description. If not, prompt them for one.`, FINISH_INTERVIEW_TEMPLATE = `You are Prometheus, the Planner agent. You are finishing the planning interview.
-
-1. Present the final plan summary to the user
-2. Ask if they're happy with the plan or want changes
-3. Once the user confirms the plan is complete, save the plan to a file:
-   - Location: .prometheus/project-plan.md
-   - Use the write tool to create this file with the complete plan content
-4. Tell the user the plan has been saved and they should:
-   - Start a new session
-   - Switch to the Atlas agent
-   - Type /execute-plan to begin implementation`, EXECUTE_PLAN_TEMPLATE = `Read the project plan from: .prometheus/project-plan.md
-
-If the plan file doesn't exist, tell the user to run /start-planning first with the Prometheus agent.
-
-If the plan exists, create a todo list with wave assignments, then delegate tasks using the task tool. Use run_in_background=true for all delegations.
-
-Delegate to:
-- @sisyphus-junior for simple tasks like file creation
-- @sisyphus for backend/core logic
-- @athena for UI/frontend work
-- @validator after each builder task to verify work
-
-Do NOT write code yourself - only delegate and track progress.`;
-
-// src/features/builtin-commands/commands.ts
-function loadBuiltinCommands() {
-  return {
-    "init-deep": {
-      name: "init-deep",
-      description: "(builtin) Initialize hierarchical AGENTS.md knowledge base",
-      template: `<command-instruction>
- ${INIT_DEEP_TEMPLATE}
- </command-instruction>
-
- <user-request>
- $ARGUMENTS
- </user-request>`,
-      argumentHint: "[--create-new] [--max-depth=N]"
-    },
-    "ralph-loop": {
-      name: "ralph-loop",
-      description: "(builtin) Start self-referential development loop until completion",
-      template: `<command-instruction>
- ${RALPH_LOOP_TEMPLATE}
- </command-instruction>
- 
- <user-task>
- $ARGUMENTS
- </user-task>`,
-      argumentHint: '"task description" [--completion-promise=TEXT] [--max-iterations=N]'
-    },
-    "ulw-loop": {
-      name: "ulw-loop",
-      description: "(builtin) Start ultrawork loop - continues until completion with ultrawork mode",
-      template: `<command-instruction>
- ${ULW_LOOP_TEMPLATE}
- </command-instruction>
- 
- <user-task>
- $ARGUMENTS
- </user-task>`,
-      argumentHint: '"task description" [--completion-promise=TEXT]'
-    },
-    "cancel-ralph": {
-      name: "cancel-ralph",
-      description: "(builtin) Cancel active Ralph Loop",
-      template: `<command-instruction>
- ${CANCEL_RALPH_TEMPLATE}
- </command-instruction>`
-    },
-    refactor: {
-      name: "refactor",
-      description: "(builtin) Intelligent refactoring command with LSP, AST-grep, and TDD verification.",
-      template: `<command-instruction>
- ${REFACTOR_TEMPLATE}
- </command-instruction>`,
-      argumentHint: "<refactoring-target> [--scope=<file|module|project>]"
-    },
-    "start-work": {
-      name: "start-work",
-      description: "(builtin) Start Sisyphus work session from Prometheus plan",
-      template: `<command-instruction>
- ${START_WORK_TEMPLATE}
- </command-instruction>
- 
- <session-context>
- Session ID: $SESSION_ID
- Timestamp: $TIMESTAMP
- </session-context>
- 
- <user-request>
- $ARGUMENTS
- </user-request>`,
-      argumentHint: "[plan-name]"
-    },
-    "stop-continuation": {
-      name: "stop-continuation",
-      description: "(builtin) Stop all continuation mechanisms for this session",
-      template: `<command-instruction>
- ${STOP_CONTINUATION_TEMPLATE}
- </command-instruction>`
-    },
-    "remove-ai-slops": {
-      name: "remove-ai-slops",
-      description: "(builtin) Remove AI-generated code smells from branch changes",
-      template: `<command-instruction>
- ${REMOVE_AI_SLOPS_TEMPLATE}
- </command-instruction>
- 
- <user-request>
- $ARGUMENTS
- </user-request>`
-    },
-    handoff: {
-      name: "handoff",
-      description: "(builtin) Create a detailed context summary for continuing work in a new session",
-      template: `<command-instruction>
- ${HANDOFF_TEMPLATE}
- </command-instruction>
- 
- <session-context>
- Session ID: $SESSION_ID
- Timestamp: $TIMESTAMP
- </session-context>
- 
- <user-request>
- $ARGUMENTS
- </user-request>`,
-      argumentHint: "[goal]"
-    },
-    "start-planning": {
-      name: "start-planning",
-      description: "(builtin) Start Prometheus planning interview for new project",
-      template: `<command-instruction>
- ${START_PLANNING_TEMPLATE}
- </command-instruction>
- 
- <user-request>
- $ARGUMENTS
- </user-request>`,
-      argumentHint: "[project-name]"
-    },
-    "finish-interview": {
-      name: "finish-interview",
-      description: "(builtin) Complete Prometheus interview and transfer to Atlas coordinator",
-      template: `<command-instruction>
-  ${FINISH_INTERVIEW_TEMPLATE}
-  </command-instruction>
-  
-  <user-request>
-  $ARGUMENTS
-  </user-request>`
-    },
-    "execute-plan": {
-      name: "execute-plan",
-      description: "(builtin) Execute Prometheus plan as Atlas agent",
-      template: `<command-instruction>
-  ${EXECUTE_PLAN_TEMPLATE}
-  </command-instruction>`
-    }
-  };
-}
-var init_commands = () => {};
-
-// src/shared/logger.ts
-function log(message, data) {
-  console.log(`[Open-Agent] ${message}`, data ?? "");
-}
-
-// src/tools/slashcommand/command-discovery.ts
-var exports_command_discovery = {};
-__export(exports_command_discovery, {
-  loadBuiltinCommandsAsRecord: () => loadBuiltinCommandsAsRecord,
-  discoverCommandsSync: () => discoverCommandsSync
-});
-function discoverBuiltinCommands() {
-  const builtinCommands = loadBuiltinCommands();
-  const commandNames = Object.keys(builtinCommands);
-  log("[discoverBuiltinCommands] Loaded commands:", commandNames);
-  return Object.values(builtinCommands).map((command) => ({
-    name: command.name,
-    metadata: {
-      name: command.name,
-      description: command.description || "",
-      argumentHint: command.argumentHint,
-      agent: command.agent
-    },
-    content: command.template,
-    scope: "builtin"
-  }));
-}
-function deduplicateCommandsByName(commands) {
-  const seen = new Set;
-  const deduplicatedCommands = [];
-  for (const command of commands) {
-    if (seen.has(command.name)) {
-      continue;
-    }
-    seen.add(command.name);
-    deduplicatedCommands.push(command);
-  }
-  return deduplicatedCommands;
-}
-function discoverCommandsSync(_directory, _options) {
-  const builtinCommands = discoverBuiltinCommands();
-  const allCommands = deduplicateCommandsByName([
-    ...builtinCommands
-  ]);
-  log("[discoverCommandsSync] Total commands:", allCommands.length);
-  allCommands.forEach((cmd) => log(`  - /${cmd.name}`));
-  return allCommands;
-}
-function loadBuiltinCommandsAsRecord() {
-  const builtinCommands = loadBuiltinCommands();
-  const result = {};
-  for (const [name, command] of Object.entries(builtinCommands)) {
-    const { argumentHint, ...rest } = command;
-    result[name] = rest;
-  }
-  return result;
-}
-var init_command_discovery = __esm(() => {
-  init_commands();
-});
-
-// src/agents/types.ts
-function isGptModel(model) {
-  return model.includes("openai/") || model.includes("github-copilot/");
-}
-
-// src/agents/sisyphus/index.ts
-var MODE = "primary";
-function createSisyphusAgent(model) {
-  const prompt = `You are **Sisyphus** - Main orchestration agent for Open-Agent.
-
-**Your Role**: Coordinate work by delegating to specialized agents. Execute directly only for trivial tasks.
-
-**Available Agents** (delegate to these):
-- explorer - Find code in the codebase
-- librarian - Search external docs and libraries  
-- oracle - Get consultation on hard problems
-- prometheus - Plan projects from scratch, save plans to .prometheus/project-plan.md
-- atlas - Take project plans and implement via todo lists and delegation
-- sisyphus-junior - Execute code fixes
-- validator - Validate completed work
-- athena - UI/UX implementation
-
-**How to Delegate**:
-Use task() tool with subagent_type:
-task(subagent_type="explorer", load_skills=[], prompt="Find login code...", run_in_background=true)
-
-**Workflow**:
-1. For questions \u2192 delegate to explorer/librarian, then answer
-2. For new projects \u2192 use /start-planning switch to Prometheus for planning
-3. For implementation \u2192 delegate to sisyphus-junior \u2192 validate
-4. For investigation \u2192 explore \u2192 report findings
-
-**Todo Management**:
-Create todo lists for multi-step tasks. Mark items in_progress/completed.
-
-**Verification**:
-Run lsp_diagnostics before marking complete. Verify builds pass.
-
-**Project Planning Workflow**:
-- Use /start-planning to switch to Prometheus for planning new projects
-- Prometheus saves plans to .prometheus/project-plan.md
-- Use /finish-interview to hand off to Atlas
-- Atlas reads the plan file and creates a todo list to implement
-
-**Tools available**:
-- Grep, glob, LSP tools: Find and analyze code
-- Write, Read, Edit: File operations
-- task: Delegate to sub-agents`;
-  return {
-    description: "Sisyphus - Main orchestration agent",
-    mode: MODE,
-    model,
-    maxTokens: 64000,
-    prompt,
-    color: "#00CED1",
-    reasoningEffort: isGptModel(model) ? "medium" : undefined
-  };
-}
-createSisyphusAgent.mode = MODE;
-
 // src/agents/atlas/index.ts
 function getAtlasPrompt() {
   const lines = [];
@@ -512,7 +217,7 @@ function getAtlasPrompt() {
   lines.push(`1. Read .prometheus/project-plan.md`);
   lines.push(`2. CREATE TODO LIST USING todowrite TOOL (MANDATORY - use the exact JSON structure)`);
   lines.push(`3. Show todo list to user`);
-  lines.push(`4. **AUTOMATIC DELEGATION**: Delegate ONLY Wave 1 builder tasks (NOT validator tasks)`);
+  lines.push(`4. Delegate Wave 1 builder tasks ONLY - do NOT delegate the validator task yet`);
   lines.push(`5. Wait for all builder tasks to complete`);
   lines.push(`6. Delegate Wave 1 validator task`);
   lines.push(`7. Wait for validator report`);
@@ -532,6 +237,316 @@ function createAtlasAgent(model) {
   };
 }
 
+// src/features/builtin-commands/templates/index.ts
+var INIT_DEEP_TEMPLATE = `(builtin) Initialize hierarchical AGENTS.md knowledge base`, RALPH_LOOP_TEMPLATE = `(builtin) Start self-referential development loop until completion`, ULW_LOOP_TEMPLATE = `(builtin) Start ultrawork loop - continues until completion with ultrawork mode`, CANCEL_RALPH_TEMPLATE = `(builtin) Cancel active Ralph Loop`, REFACTOR_TEMPLATE = `(builtin) Intelligent refactoring command with LSP, AST-grep, architecture analysis, and TDD verification.`, START_WORK_TEMPLATE = `(builtin) Start Sisyphus work session from Prometheus plan`, STOP_CONTINUATION_TEMPLATE = `(builtin) Stop all continuation mechanisms (ralph loop, todo continuation, boulder) for this session`, REMOVE_AI_SLOPS_TEMPLATE = `(builtin) Remove AI-generated code smells from branch changes and critically review the results`, HANDOFF_TEMPLATE = `(builtin) Create a detailed context summary for continuing work in a new session`, START_PLANNING_TEMPLATE = `You are Prometheus, the Planner agent. Your role is to help users plan new projects from scratch.
+
+If the user has NOT provided a project description (user-request is empty), ask them to describe their project idea, what they want to build, and any requirements they have.
+
+If the user HAS provided a project description, start the planning interview:
+1. Ask clarifying questions about the project to understand requirements
+2. Create a detailed work plan with task breakdowns
+3. Save the plan when complete
+
+Begin by checking if the user has provided a project description. If not, prompt them for one.`, FINISH_INTERVIEW_TEMPLATE = `You are Prometheus, the Planner agent. You are finishing the planning interview.
+
+1. Present the final plan summary to the user
+2. Ask if they're happy with the plan or want changes
+3. Once the user confirms the plan is complete, save the plan to a file:
+   - Location: .prometheus/project-plan.md
+   - Use the write tool to create this file with the complete plan content
+4. Tell the user the plan has been saved and they should:
+   - Start a new session
+   - Switch to the Atlas agent
+   - Type /execute-plan to begin implementation`, ATLAS_PROMPT, EXECUTE_PLAN_TEMPLATE;
+var init_templates = __esm(() => {
+  ATLAS_PROMPT = getAtlasPrompt();
+  EXECUTE_PLAN_TEMPLATE = `Read the project plan from: .prometheus/project-plan.md
+
+If the plan file doesn't exist, tell the user to run /start-planning first with the Prometheus agent.
+
+If the plan exists:
+1. Create a todo list for ALL waves (use todowrite tool)
+2. Delegate the current wave's builder tasks in parallel (run_in_background=true)
+3. After all builder tasks complete, delegate to validator for that wave
+4. Only after validation passes, move to next wave
+
+Delegate to:
+- sisyphus-junior for simple tasks like file creation
+- sisyphus for backend/core logic
+- athena for UI/frontend work
+- validator ONLY after a wave is complete (not for individual tasks)
+
+Do NOT write code yourself - only delegate and track progress.
+
+---
+
+## ATLAS FULL PROMPT
+
+${ATLAS_PROMPT}`;
+});
+
+// src/features/builtin-commands/commands.ts
+function loadBuiltinCommands() {
+  return {
+    "init-deep": {
+      name: "init-deep",
+      description: "(builtin) Initialize hierarchical AGENTS.md knowledge base",
+      template: `<command-instruction>
+ ${INIT_DEEP_TEMPLATE}
+ </command-instruction>
+
+ <user-request>
+ $ARGUMENTS
+ </user-request>`,
+      argumentHint: "[--create-new] [--max-depth=N]"
+    },
+    "ralph-loop": {
+      name: "ralph-loop",
+      description: "(builtin) Start self-referential development loop until completion",
+      template: `<command-instruction>
+ ${RALPH_LOOP_TEMPLATE}
+ </command-instruction>
+ 
+ <user-task>
+ $ARGUMENTS
+ </user-task>`,
+      argumentHint: '"task description" [--completion-promise=TEXT] [--max-iterations=N]'
+    },
+    "ulw-loop": {
+      name: "ulw-loop",
+      description: "(builtin) Start ultrawork loop - continues until completion with ultrawork mode",
+      template: `<command-instruction>
+ ${ULW_LOOP_TEMPLATE}
+ </command-instruction>
+ 
+ <user-task>
+ $ARGUMENTS
+ </user-task>`,
+      argumentHint: '"task description" [--completion-promise=TEXT]'
+    },
+    "cancel-ralph": {
+      name: "cancel-ralph",
+      description: "(builtin) Cancel active Ralph Loop",
+      template: `<command-instruction>
+ ${CANCEL_RALPH_TEMPLATE}
+ </command-instruction>`
+    },
+    refactor: {
+      name: "refactor",
+      description: "(builtin) Intelligent refactoring command with LSP, AST-grep, and TDD verification.",
+      template: `<command-instruction>
+ ${REFACTOR_TEMPLATE}
+ </command-instruction>`,
+      argumentHint: "<refactoring-target> [--scope=<file|module|project>]"
+    },
+    "start-work": {
+      name: "start-work",
+      description: "(builtin) Start Sisyphus work session from Prometheus plan",
+      template: `<command-instruction>
+ ${START_WORK_TEMPLATE}
+ </command-instruction>
+ 
+ <session-context>
+ Session ID: $SESSION_ID
+ Timestamp: $TIMESTAMP
+ </session-context>
+ 
+ <user-request>
+ $ARGUMENTS
+ </user-request>`,
+      argumentHint: "[plan-name]"
+    },
+    "stop-continuation": {
+      name: "stop-continuation",
+      description: "(builtin) Stop all continuation mechanisms for this session",
+      template: `<command-instruction>
+ ${STOP_CONTINUATION_TEMPLATE}
+ </command-instruction>`
+    },
+    "remove-ai-slops": {
+      name: "remove-ai-slops",
+      description: "(builtin) Remove AI-generated code smells from branch changes",
+      template: `<command-instruction>
+ ${REMOVE_AI_SLOPS_TEMPLATE}
+ </command-instruction>
+ 
+ <user-request>
+ $ARGUMENTS
+ </user-request>`
+    },
+    handoff: {
+      name: "handoff",
+      description: "(builtin) Create a detailed context summary for continuing work in a new session",
+      template: `<command-instruction>
+ ${HANDOFF_TEMPLATE}
+ </command-instruction>
+ 
+ <session-context>
+ Session ID: $SESSION_ID
+ Timestamp: $TIMESTAMP
+ </session-context>
+ 
+ <user-request>
+ $ARGUMENTS
+ </user-request>`,
+      argumentHint: "[goal]"
+    },
+    "start-planning": {
+      name: "start-planning",
+      description: "(builtin) Start Prometheus planning interview for new project",
+      template: `<command-instruction>
+ ${START_PLANNING_TEMPLATE}
+ </command-instruction>
+ 
+ <user-request>
+ $ARGUMENTS
+ </user-request>`,
+      argumentHint: "[project-name]"
+    },
+    "finish-interview": {
+      name: "finish-interview",
+      description: "(builtin) Complete Prometheus interview and transfer to Atlas coordinator",
+      template: `<command-instruction>
+  ${FINISH_INTERVIEW_TEMPLATE}
+  </command-instruction>
+  
+  <user-request>
+  $ARGUMENTS
+  </user-request>`
+    },
+    "execute-plan": {
+      name: "execute-plan",
+      description: "(builtin) Execute Prometheus plan as Atlas agent",
+      template: `<command-instruction>
+  ${EXECUTE_PLAN_TEMPLATE}
+  </command-instruction>`
+    }
+  };
+}
+var init_commands = __esm(() => {
+  init_templates();
+});
+
+// src/shared/logger.ts
+function log(message, data) {
+  console.log(`[Open-Agent] ${message}`, data ?? "");
+}
+
+// src/tools/slashcommand/command-discovery.ts
+var exports_command_discovery = {};
+__export(exports_command_discovery, {
+  loadBuiltinCommandsAsRecord: () => loadBuiltinCommandsAsRecord,
+  discoverCommandsSync: () => discoverCommandsSync
+});
+function discoverBuiltinCommands() {
+  const builtinCommands = loadBuiltinCommands();
+  const commandNames = Object.keys(builtinCommands);
+  log("[discoverBuiltinCommands] Loaded commands:", commandNames);
+  return Object.values(builtinCommands).map((command) => ({
+    name: command.name,
+    metadata: {
+      name: command.name,
+      description: command.description || "",
+      argumentHint: command.argumentHint,
+      agent: command.agent
+    },
+    content: command.template,
+    scope: "builtin"
+  }));
+}
+function deduplicateCommandsByName(commands) {
+  const seen = new Set;
+  const deduplicatedCommands = [];
+  for (const command of commands) {
+    if (seen.has(command.name)) {
+      continue;
+    }
+    seen.add(command.name);
+    deduplicatedCommands.push(command);
+  }
+  return deduplicatedCommands;
+}
+function discoverCommandsSync(_directory, _options) {
+  const builtinCommands = discoverBuiltinCommands();
+  const allCommands = deduplicateCommandsByName([
+    ...builtinCommands
+  ]);
+  log("[discoverCommandsSync] Total commands:", allCommands.length);
+  allCommands.forEach((cmd) => log(`  - /${cmd.name}`));
+  return allCommands;
+}
+function loadBuiltinCommandsAsRecord() {
+  const builtinCommands = loadBuiltinCommands();
+  const result = {};
+  for (const [name, command] of Object.entries(builtinCommands)) {
+    const { argumentHint, ...rest } = command;
+    result[name] = rest;
+  }
+  return result;
+}
+var init_command_discovery = __esm(() => {
+  init_commands();
+});
+
+// src/agents/types.ts
+function isGptModel(model) {
+  return model.includes("openai/") || model.includes("github-copilot/");
+}
+
+// src/agents/sisyphus/index.ts
+var MODE = "primary";
+function createSisyphusAgent(model) {
+  const prompt = `You are **Sisyphus** - Main orchestration agent for Open-Agent.
+
+**Your Role**: Coordinate work by delegating to specialized agents. Execute directly only for trivial tasks.
+
+**Available Agents** (delegate to these):
+- explorer - Find code in the codebase
+- librarian - Search external docs and libraries  
+- oracle - Get consultation on hard problems
+- prometheus - Plan projects from scratch, save plans to .prometheus/project-plan.md
+- atlas - Take project plans and implement via todo lists and delegation
+- sisyphus-junior - Execute code fixes
+- validator - Validate completed work
+- athena - UI/UX implementation
+
+**How to Delegate**:
+Use task() tool with subagent_type:
+task(subagent_type="explorer", load_skills=[], prompt="Find login code...", run_in_background=true)
+
+**Workflow**:
+1. For questions \u2192 delegate to explorer/librarian, then answer
+2. For new projects \u2192 use /start-planning switch to Prometheus for planning
+3. For implementation \u2192 delegate to sisyphus-junior \u2192 validate
+4. For investigation \u2192 explore \u2192 report findings
+
+**Todo Management**:
+Create todo lists for multi-step tasks. Mark items in_progress/completed.
+
+**Verification**:
+Run lsp_diagnostics before marking complete. Verify builds pass.
+
+**Project Planning Workflow**:
+- Use /start-planning to switch to Prometheus for planning new projects
+- Prometheus saves plans to .prometheus/project-plan.md
+- Use /finish-interview to hand off to Atlas
+- Atlas reads the plan file and creates a todo list to implement
+
+**Tools available**:
+- Grep, glob, LSP tools: Find and analyze code
+- Write, Read, Edit: File operations
+- task: Delegate to sub-agents`;
+  return {
+    description: "Sisyphus - Main orchestration agent",
+    mode: MODE,
+    model,
+    maxTokens: 64000,
+    prompt,
+    color: "#00CED1",
+    reasoningEffort: isGptModel(model) ? "medium" : undefined
+  };
+}
+createSisyphusAgent.mode = MODE;
 // src/agents/explorer/index.ts
 function createExplorerAgent(model) {
   return { description: "Explorer - Find code", mode: "subagent", model, prompt: "Find code patterns in the repository. Use grep, glob, and LSP tools to locate relevant code." };
@@ -13596,22 +13611,191 @@ function createSkillTool(options = {}) {
 // src/create-tools.ts
 init_command_discovery();
 init_commands();
+
+// src/tools/delegate-task/index.ts
+function createDelegateTask(manager) {
+  const description = `Spawn agent task with background execution support.
+
+**IMPORTANT**: You MUST provide subagent_type for delegation.
+
+**CORRECT - Using subagent_type:**
+\`\`\`
+task(subagent_type="sisyphus-junior", load_skills=[], description="Initialize project", prompt="...", run_in_background=true)
+\`\`\`
+
+Available agents (subagent_type):
+- sisyphus: Backend/core logic
+- athena: UI/frontend
+- sisyphus-junior: Simple tasks
+- validator: QA/verification
+
+Parameters:
+- subagent_type: REQUIRED - which agent to spawn
+- load_skills: ALWAYS pass [] or specific skills
+- description: Short task description
+- prompt: Full task instructions
+- run_in_background: true=async (don't wait), false=sync (wait for completion)
+
+**Use run_in_background=true for parallel delegation of multiple independent tasks.**`;
+  return tool({
+    description,
+    args: {
+      subagent_type: tool.schema.string().describe("REQUIRED: Agent type (sisyphus, athena, sisyphus-junior, validator)"),
+      load_skills: tool.schema.array(tool.schema.string()).describe("Always pass [] if no skills needed"),
+      description: tool.schema.string().optional().describe("Short task description"),
+      prompt: tool.schema.string().describe("Task instructions for the agent"),
+      run_in_background: tool.schema.boolean().describe("true=async (no waiting), false=sync (wait for completion)"),
+      parent_session_id: tool.schema.string().optional().describe("Parent session for context (auto-filled if not provided)")
+    },
+    async execute(args, toolContext) {
+      const ctx = toolContext;
+      if (args.run_in_background === undefined) {
+        return "Error: run_in_background parameter is REQUIRED. Use true for parallel delegation.";
+      }
+      if (!args.subagent_type) {
+        return "Error: subagent_type is REQUIRED for delegation.";
+      }
+      const description2 = args.description || `Task: ${args.prompt.slice(0, 50)}`;
+      if (args.run_in_background) {
+        const task = await manager.launch({
+          description: description2,
+          prompt: args.prompt,
+          agent: args.subagent_type,
+          parentSessionID: ctx.sessionID || "main"
+        });
+        return `Background task launched.
+
+Task ID: ${task.id}
+Agent: ${task.agent}
+Status: ${task.status}
+
+Use task_status tool with task_id="${task.id}" to check progress. Do not run more than once every 90 seconds`;
+      } else {
+        return `Sync execution requested. Use run_in_background=true for parallel delegation.
+Task would run: ${description2}
+Agent: ${args.subagent_type}`;
+      }
+    }
+  });
+}
+
+// src/tools/delegate-task/manager.ts
+class SimpleBackgroundManager {
+  tasks = new Map;
+  client;
+  directory;
+  constructor(ctx) {
+    this.client = ctx.client;
+    this.directory = ctx.directory;
+  }
+  async launch(input) {
+    const task = {
+      id: `bg_${crypto.randomUUID().slice(0, 8)}`,
+      status: "pending",
+      createdAt: new Date,
+      parentSessionID: input.parentSessionID,
+      description: input.description,
+      prompt: input.prompt,
+      agent: input.agent
+    };
+    this.tasks.set(task.id, task);
+    this.startTask(task).catch((err) => {
+      console.error("[simple-bg-manager] startTask error:", err);
+      task.status = "error";
+      task.error = err instanceof Error ? err.message : String(err);
+      task.completedAt = new Date;
+    });
+    return { ...task };
+  }
+  async startTask(task) {
+    task.status = "running";
+    task.startedAt = new Date;
+    const createResult = await this.client.session.create({
+      body: {
+        parentID: task.parentSessionID,
+        title: `${task.description} (@${task.agent})`
+      },
+      query: { directory: this.directory }
+    });
+    if (createResult.error || !createResult.data?.id) {
+      throw new Error(`Failed to create session: ${createResult.error}`);
+    }
+    const sessionID = createResult.data.id;
+    task.sessionID = sessionID;
+    await this.client.session.promptAsync({
+      path: { id: sessionID },
+      body: {
+        agent: task.agent,
+        parts: [{ type: "text", text: task.prompt }]
+      }
+    });
+  }
+  getTask(id) {
+    return this.tasks.get(id);
+  }
+  getAllTasks() {
+    return Array.from(this.tasks.values());
+  }
+}
+
+// src/tools/delegate-task/task-status.ts
+function createTaskStatusTool(manager) {
+  const description = `Check the status of a background task.
+
+Use this to check if a delegated task has completed, is running, or failed.
+
+Parameters:
+- task_id: The ID returned when you launched the background task (format: bg_xxxxxxxx)`;
+  return tool({
+    description,
+    args: {
+      task_id: tool.schema.string().describe("Task ID to check (format: bg_xxxxxxxx)")
+    },
+    async execute(args) {
+      const taskId = args.task_id;
+      if (!taskId) {
+        return "Error: task_id is required";
+      }
+      const task = manager.getTask(taskId);
+      if (!task) {
+        return `Task not found: ${taskId}`;
+      }
+      return `Task ID: ${task.id}
+Agent: ${task.agent}
+Status: ${task.status}
+Description: ${task.description}
+Created: ${task.createdAt.toISOString()}
+${task.startedAt ? `Started: ${task.startedAt.toISOString()}` : ""}
+${task.completedAt ? `Completed: ${task.completedAt.toISOString()}` : ""}
+${task.error ? `Error: ${task.error}` : ""}
+${task.sessionID ? `Session: ${task.sessionID}` : ""}`;
+    }
+  });
+}
+
+// src/create-tools.ts
 async function createTools(args) {
   const { ctx, pluginConfig } = args;
   log("[createTools] Creating tools...");
   const builtinCommands = loadBuiltinCommands();
   const discoveredCommands = discoverCommandsSync(ctx.directory);
+  const backgroundManager = new SimpleBackgroundManager(ctx);
+  const delegateTaskTool = createDelegateTask(backgroundManager);
+  const taskStatusTool = createTaskStatusTool(backgroundManager);
   const commandsTool = createCommandsTool();
   const skillTool = createSkillTool({ commands: discoveredCommands });
   const allTools = {
     commands: commandsTool,
-    skill: skillTool
+    skill: skillTool,
+    task: delegateTaskTool,
+    task_status: taskStatusTool
   };
   log("[createTools] Created tools:", Object.keys(allTools));
   log("[createTools] Loaded builtin commands:", Object.keys(builtinCommands));
   return {
     filteredTools: allTools,
-    builtinCommands
+    builtinCommands,
+    backgroundManager
   };
 }
 

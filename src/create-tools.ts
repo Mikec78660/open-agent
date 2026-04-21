@@ -9,6 +9,9 @@ import { createCommandsTool } from "./tools/commands";
 import { createSkillTool } from "./tools/skill/tools";
 import { discoverCommandsSync } from "./tools/slashcommand/command-discovery";
 import { loadBuiltinCommands, type BuiltinCommands } from "./features/builtin-commands/commands";
+import { createDelegateTask } from "./tools/delegate-task";
+import { SimpleBackgroundManager } from "./tools/delegate-task/manager";
+import { createTaskStatusTool } from "./tools/delegate-task/task-status";
 import type { PluginContext } from "./plugin/types";
 import type { OpenAgentConfig } from "./config/schema/open-agent-config";
 import { log } from "./shared/logger";
@@ -16,6 +19,7 @@ import { log } from "./shared/logger";
 export type CreateToolsResult = {
   filteredTools: Record<string, ToolDefinition>;
   builtinCommands: BuiltinCommands;
+  backgroundManager: SimpleBackgroundManager;
 };
 
 export async function createTools(args: {
@@ -32,12 +36,21 @@ export async function createTools(args: {
   // Discover all commands for the skill tool (used for / dropdown)
   const discoveredCommands = discoverCommandsSync(ctx.directory);
 
+  // Create background manager for task delegation
+  const backgroundManager = new SimpleBackgroundManager(ctx);
+
+  // Create delegate task tool with background support
+  const delegateTaskTool = createDelegateTask(backgroundManager);
+  const taskStatusTool = createTaskStatusTool(backgroundManager);
+
   // Create a simple tool registry
   const commandsTool = createCommandsTool();
   const skillTool = createSkillTool({ commands: discoveredCommands });
   const allTools: Record<string, ToolDefinition> = {
     commands: commandsTool,
     skill: skillTool,
+    task: delegateTaskTool,
+    task_status: taskStatusTool,
   };
 
   log("[createTools] Created tools:", Object.keys(allTools));
@@ -46,5 +59,6 @@ export async function createTools(args: {
   return {
     filteredTools: allTools,
     builtinCommands,
+    backgroundManager,
   };
 }
