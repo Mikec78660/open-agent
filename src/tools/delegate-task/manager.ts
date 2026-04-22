@@ -250,17 +250,13 @@ export class SimpleBackgroundManager {
     if (this.notificationPending) return;
     this.notificationPending = true;
 
-    const notification = `<system-reminder>
-[ALL AGENTS IDLE]
-All delegated builder tasks have completed. You may now delegate the validator task for this wave.
-</system-reminder>`;
+    const notification = `[ALL AGENTS IDLE] All builder tasks complete. Delegate validator now.`;
 
     const sessionID = this.mainSessionID;
     
     this.client.session.promptAsync({
       path: { id: sessionID },
       body: {
-        noReply: true,
         agent: "atlas",
         parts: [{ type: "text", text: notification }],
       },
