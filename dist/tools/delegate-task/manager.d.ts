@@ -8,6 +8,7 @@ export declare class SimpleBackgroundManager {
     private pollingInterval;
     private notificationPending;
     constructor(ctx: PluginContext);
+    getParentSessionID(): string;
     getPendingNotifications(): string[];
     clearPendingNotifications(): void;
     launch(input: LaunchInput): Promise<BackgroundTask>;

@@ -13954,10 +13954,14 @@ class SimpleBackgroundManager {
   constructor(ctx) {
     this.client = ctx.client;
     this.directory = ctx.directory;
-    this.mainSessionID = ctx.sessionID || "main";
+    const sessionID = ctx.sessionID;
+    this.mainSessionID = sessionID || "main";
     initQueue((_agentType) => {}, () => {
       this.sendAllIdleNotification();
     });
+  }
+  getParentSessionID() {
+    return this.mainSessionID;
   }
   getPendingNotifications() {
     return [];
@@ -14136,13 +14140,19 @@ class SimpleBackgroundManager {
 [ALL AGENTS IDLE]
 All delegated builder tasks have completed. You may now delegate the validator task for this wave.
 </system-reminder>`;
+    const sessionID = this.mainSessionID;
     this.client.session.promptAsync({
-      path: { id: this.mainSessionID },
+      path: { id: sessionID },
       body: {
         noReply: true,
+        agent: "atlas",
         parts: [{ type: "text", text: notification }]
       }
-    }).catch(() => {});
+    }).then(() => {
+      console.log("[manager] Sent 'All agents idle' notification to session:", sessionID);
+    }).catch((err) => {
+      console.error("[manager] Failed to send notification:", err.message);
+    });
     this.notificationPending = false;
   }
 }
