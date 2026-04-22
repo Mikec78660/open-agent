@@ -257,20 +257,27 @@ export class SimpleBackgroundManager {
     if (this.notificationPending) return;
     this.notificationPending = true;
 
-    const notification = `[ALL AGENTS IDLE] All builder tasks complete. Delegate validator now.`;
+    const notification = `Background task complete. All builders idle. Ready for validator.`;
 
-    const sessionID = this.mainSessionID;
-    
-    this.client.session.prompt({
-      path: { id: sessionID },
-      body: {
-        parts: [{ type: "text", text: notification }],
-      },
-    }).then(() => {
-      console.log("[manager] Sent 'All agents idle' notification to session:", sessionID);
-    }).catch((err: Error) => {
-      console.error("[manager] Failed to send notification:", err.message);
-    });
+    const parentSessions = new Set<string>();
+    for (const task of this.tasks.values()) {
+      if (task.parentSessionID) {
+        parentSessions.add(task.parentSessionID);
+      }
+    }
+
+    for (const sessionID of parentSessions) {
+      this.client.session.promptAsync({
+        path: { id: sessionID },
+        body: {
+          parts: [{ type: "text", text: notification }],
+        },
+      }).then(() => {
+        console.log("[manager] Sent 'All agents idle' notification to session:", sessionID);
+      }).catch((err: Error) => {
+        console.error("[manager] Failed to send notification:", err.message);
+      });
+    }
 
     this.notificationPending = false;
   }
