@@ -202,10 +202,13 @@ export class SimpleBackgroundManager {
     if (pendingTasks.length === 0) return;
 
     const task = pendingTasks[0];
+    console.log("[manager] Processing queued task:", task.id, "for agent:", task.requestedAgent);
 
     let idleInstance = await getIdleInstance(task.requestedAgent);
+    console.log("[manager] Idle instance for", task.requestedAgent, ":", idleInstance?.agentType);
     if (!idleInstance) {
       idleInstance = await getFallbackInstance(task.requestedAgent);
+      console.log("[manager] Fallback instance:", idleInstance?.agentType);
     }
 
     if (idleInstance) {
@@ -220,13 +223,17 @@ export class SimpleBackgroundManager {
       };
       markSlotBusy(idleInstance.agentType);
 
-      this.startTask(task).catch((err) => {
-        console.error("[manager] startTask error:", err);
+      this.startTask(task).then(() => {
+        console.log("[manager] Queued task started:", task.id);
+      }).catch((err) => {
+        console.error("[manager] startTask error for queued task:", err);
         task.status = "error";
         task.error = err instanceof Error ? err.message : String(err);
         task.completedAt = new Date();
         markSlotIdle(idleInstance!.agentType);
       });
+    } else {
+      console.log("[manager] No idle instance available for queued task");
     }
   }
 
