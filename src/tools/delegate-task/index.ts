@@ -1,7 +1,10 @@
 // index.ts
-//  [Descriptive explanation of what the code in the file does. List dependencies here.]
+//  Task delegation tool with pool-based execution and fallback routing
+//  Uses llama.cpp slot API for slot monitoring
+//  Routes overflow tasks through fallback chain
+//  Sends "All agents idle" notification when all slots go idle
 //  
-//  Created on: Tue Apr 21 2026
+//  Created on: Wed Apr 22 2026
 //      Author: GPU-Server/Qwen3.6-35B-A3B-Q8_0
 
 import { tool, type ToolDefinition } from "@opencode-ai/plugin";
@@ -9,55 +12,62 @@ import type { DelegateTaskArgs } from "./types";
 import { SimpleBackgroundManager } from "./manager";
 
 export function createDelegateTask(manager: SimpleBackgroundManager): ToolDefinition {
-  const description = `Spawn agent task with background execution support.
+  const description = `Spawn agent task with pool-based execution and automatic fallback routing.
 
-**IMPORTANT**: You MUST provide subagent_type for delegation.
+**Pool-based Delegation**: Tasks are routed to available agent slots. If all slots
+for the requested agent are busy, tasks are automatically routed through the fallback chain.
 
-**CORRECT - Using subagent_type:**
+**Fallback Chain**: sisyphus-junior tasks can fall back to sisyphus or athena if all
+junior slots are busy. Other agents use their configured slots directly.
+
+**CORRECT Usage:**
 \`\`\`
-task(subagent_type="sisyphus-junior", load_skills=[], description="Initialize project", prompt="...", run_in_background=true)
+task(subagent_type="sisyphus-junior", prompt="...", run_in_background=true)
+task(subagent_type="athena", prompt="...", run_in_background=true)
 \`\`\`
 
-Available agents (subagent_type):
-- sisyphus: Backend/core logic
-- athena: UI/frontend
-- sisyphus-junior: Simple tasks
-- validator: QA/verification
+**Available Agents**:
+- sisyphus-junior: Small tasks (3 slots, fallback to sisyphus or athena)
+- sisyphus: Backend/core logic (1 slot)
+- athena: UI/frontend (1 slot)
+- validator: QA/verification (1 slot)
+- explorer: Code search
+- librarian: Documentation search
+- oracle: Consultation
 
-Parameters:
-- subagent_type: REQUIRED - which agent to spawn
-- load_skills: ALWAYS pass [] or specific skills
-- description: Short task description
-- prompt: Full task instructions
-- run_in_background: true=async (don't wait), false=sync (wait for completion)
+**Parameters**:
+- subagent_type: REQUIRED - which agent pool to use
+- prompt: Task instructions
+- run_in_background: true=async (always recommended)
 
-**Use run_in_background=true for parallel delegation of multiple independent tasks.**`;
+**Notifications**:
+- When all builder agents complete: "All agents idle"
+- Queued tasks are assigned automatically when slots become available`;
 
   return tool({
     description,
     args: {
-      subagent_type: tool.schema.string().describe("REQUIRED: Agent type (sisyphus, athena, sisyphus-junior, validator)"),
-      load_skills: tool.schema.array(tool.schema.string()).describe("Always pass [] if no skills needed"),
+      subagent_type: tool.schema.string().describe("REQUIRED: Agent pool (sisyphus-junior, athena, sisyphus, validator, etc.)"),
+      load_skills: tool.schema.array(tool.schema.string()).describe("Always pass []"),
       description: tool.schema.string().optional().describe("Short task description"),
       prompt: tool.schema.string().describe("Task instructions for the agent"),
-      run_in_background: tool.schema.boolean().describe("true=async (no waiting), false=sync (wait for completion)"),
-      parent_session_id: tool.schema.string().optional().describe("Parent session for context (auto-filled if not provided)"),
+      run_in_background: tool.schema.boolean().describe("true=async, false=sync"),
+      parent_session_id: tool.schema.string().optional().describe("Parent session"),
     },
     async execute(args: DelegateTaskArgs, toolContext) {
       const ctx = toolContext as { sessionID?: string };
 
       if (args.run_in_background === undefined) {
-        return "Error: run_in_background parameter is REQUIRED. Use true for parallel delegation.";
+        return "Error: run_in_background is REQUIRED. Use true for parallel delegation.";
       }
 
       if (!args.subagent_type) {
-        return "Error: subagent_type is REQUIRED for delegation.";
+        return "Error: subagent_type is REQUIRED.";
       }
 
       const description = args.description || `Task: ${args.prompt.slice(0, 50)}`;
 
       if (args.run_in_background) {
-        // Background execution - launch and return immediately
         const task = await manager.launch({
           description,
           prompt: args.prompt,
@@ -65,18 +75,26 @@ Parameters:
           parentSessionID: ctx.sessionID || "main",
         });
 
-        return `Background task launched.
+        let msg = `Background task launched.
 
 Task ID: ${task.id}
-Agent: ${task.agent}
-Status: ${task.status}
+Requested: ${task.requestedAgent}
+Assigned: ${task.agent}
+Status: ${task.status}`;
 
-Use task_status tool with task_id="${task.id}" to check progress. Do not run more than once every 90 seconds`;
+        if (task.model) {
+          msg += `\nModel: ${task.model.providerID}/${task.model.modelID} (slot ${task.model.slotId})`;
+        }
+
+        if (task.status === "queued") {
+          msg += `\nTask queued - will be assigned when slot available.`;
+        }
+
+        msg += `\n\nYou will receive "All agents idle" when all tasks complete.`;
+
+        return msg;
       } else {
-        // Sync execution - this would wait, but for now return instruction
-        return `Sync execution requested. Use run_in_background=true for parallel delegation.
-Task would run: ${description}
-Agent: ${args.subagent_type}`;
+        return `Sync execution not supported. Use run_in_background=true.`;
       }
     },
   });

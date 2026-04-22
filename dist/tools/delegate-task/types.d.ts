@@ -5,7 +5,14 @@ export interface BackgroundTask {
     description: string;
     prompt: string;
     agent: string;
-    status: "pending" | "running" | "completed" | "error" | "cancelled";
+    requestedAgent: string;
+    model?: {
+        providerID: string;
+        modelID: string;
+        llamaModelID: string;
+        slotId: number;
+    };
+    status: "pending" | "running" | "completed" | "error" | "cancelled" | "queued";
     createdAt: Date;
     startedAt?: Date;
     completedAt?: Date;

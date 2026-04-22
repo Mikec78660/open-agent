@@ -3,7 +3,6 @@
 //  
 //  Created on: Tue Apr 21 2026
 //      Author: GPU-Server/Qwen3.6-35B-A3B-Q8_0
-
 import { tool, type ToolDefinition } from "@opencode-ai/plugin";
 import { SimpleBackgroundManager } from "./manager";
 
@@ -33,15 +32,24 @@ Parameters:
         return `Task not found: ${taskId}`;
       }
 
-      return `Task ID: ${task.id}
-Agent: ${task.agent}
+      let statusMsg = `Task ID: ${task.id}
+Requested: ${task.requestedAgent}
+Assigned: ${task.agent}
 Status: ${task.status}
 Description: ${task.description}
-Created: ${task.createdAt.toISOString()}
+Created: ${task.createdAt.toISOString()}`;
+
+if (task.model) {
+  statusMsg += `\nModel: ${task.model.providerID}/${task.model.modelID} (slot ${task.model.slotId})`;
+}
+
+statusMsg += `
 ${task.startedAt ? `Started: ${task.startedAt.toISOString()}` : ""}
 ${task.completedAt ? `Completed: ${task.completedAt.toISOString()}` : ""}
 ${task.error ? `Error: ${task.error}` : ""}
 ${task.sessionID ? `Session: ${task.sessionID}` : ""}`;
+
+return statusMsg;
     },
   });
 }

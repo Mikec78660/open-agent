@@ -42,8 +42,17 @@ const OpenAgentPlugin = async (ctx: PluginContext) => {
   };
 
   for (const [agentName, agentConfig] of Object.entries(config.agents ?? {})) {
-    if (agentConfig.model && agents[agentName]) {
-      agents[agentName].model = agentConfig.model;
+    const cfg = agentConfig as { model?: string; instances?: any[]; mode?: string };
+    let model: string | undefined;
+    
+    if (cfg.model) {
+      model = cfg.model;
+    } else if (cfg.instances && cfg.instances.length > 0) {
+      model = cfg.instances[0].model;
+    }
+    
+    if (model && agents[agentName]) {
+      agents[agentName].model = model;
     }
   }
 
@@ -57,6 +66,7 @@ const OpenAgentPlugin = async (ctx: PluginContext) => {
   const hooks = createHooks({
     ctx,
     pluginConfig: config,
+    backgroundManager: toolsResult.backgroundManager,
   });
 
   const pluginInterface = createPluginInterface({

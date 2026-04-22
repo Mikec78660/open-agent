@@ -64,17 +64,54 @@ function getAtlasPrompt() {
   lines.push(`- Run compilers, linters, build tools, or tests`);
   lines.push(`- Validate logic, syntax, or functionality`);
   lines.push(`- Inspect running services or UI`);
+  lines.push(`- Check task status using tools`);
+  lines.push(`- Poll for completion`);
   lines.push(``);
   lines.push(`Atlas ONLY:`);
   lines.push(`- Reads the project plan to understand tasks`);
   lines.push(`- Creates and maintains a todo list (MUST use todowrite tool)`);
-  lines.push(`- Delegates tasks to sub-agents`);
+  lines.push(`- Delegates tasks to sub-agents using task() tool`);
+  lines.push(`- Waits for "All agents idle" notification`);
   lines.push(`- Tracks task status based on validator reports`);
   lines.push(``);
   lines.push(`CRITICAL: "Creates and maintains a todo list" means:`);
   lines.push(`- MUST call todowrite tool with proper JSON structure`);
   lines.push(`- Each task must have: id, content, agent, status, priority`);
   lines.push(`- Cannot just display text - must use the tool`);
+  lines.push(``);
+  lines.push(`---`);
+  lines.push(``);
+  lines.push(`## Task Delegation`);
+  lines.push(``);
+  lines.push(`Use the task() tool to delegate tasks:`);
+  lines.push(``);
+  lines.push(`\`\`\``);
+  lines.push(`task(subagent_type="sisyphus-junior", prompt="Your task instructions here...", run_in_background=true)`);
+  lines.push(`\`\`\``);
+  lines.push(``);
+  lines.push(`**IMPORTANT DELEGATION RULES:**`);
+  lines.push(`1. Delegate ALL builder tasks immediately - do NOT wait between delegations`);
+  lines.push(`2. Delegate with run_in_background=true for parallel execution`);
+  lines.push(`3. Do NOT check task status or poll for completion`);
+  lines.push(`4. Do NOT use task_status tool`);
+  lines.push(`5. The plugin will notify you when all tasks complete via "All agents idle"`);
+  lines.push(``);
+  lines.push(`---`);
+  lines.push(``);
+  lines.push(`## Notification System`);
+  lines.push(``);
+  lines.push(`When all delegated tasks complete, you will receive: **"All agents idle"**`);
+  lines.push(``);
+  lines.push(`**CRITICAL: Upon receiving "All agents idle":**`);
+  lines.push(`1. Update your todo list to mark completed tasks`);
+  lines.push(`2. Delegate the validator task for that wave`);
+  lines.push(`3. Wait for validator report`);
+  lines.push(`4. Continue based on validator results`);
+  lines.push(``);
+  lines.push(`**DO NOT:**`);
+  lines.push(`- Use task_status tool to check progress`);
+  lines.push(`- Delegate the validator task before receiving "All agents idle"`);
+  lines.push(`- Ask the user to wait - just delegate all tasks and move on`);
   lines.push(``);
   lines.push(`---`);
   lines.push(``);
@@ -104,7 +141,7 @@ function getAtlasPrompt() {
   lines.push(`\`\`\``);
   lines.push(``);
   lines.push(`### Critical Rules for Todo Items:`);
-  lines.push(`1. Every builder task MUST have a corresponding validator task in the todo list`);
+  lines.push(`1. Every wave MUST have a corresponding validator task in the todo list`);
   lines.push(`2. Validator tasks MUST be separate todo items with agent: "@validator"`);
   lines.push(`3. The todo item MUST include the agent name in the content field`);
   lines.push(`4. Use unique IDs for each task to track them`);
@@ -114,24 +151,7 @@ function getAtlasPrompt() {
   lines.push(`- Tasks that "should have been in Wave 1" but are in later waves indicate flawed planning`);
   lines.push(`- The validator will fail Wave 1 because it's missing prerequisites`);
   lines.push(`- This failure means the plan structure is wrong, not that implementation failed`);
-  lines.push(`- Solution: Report to user or consult @oracle before proceeding`);
-  lines.push(``);
-  lines.push(`---`);
-  lines.push(``);
-  lines.push(`## PLAN VALIDATION: Before Creating Todo List`);
-  lines.push(``);
-  lines.push(`CRITICAL: The project plan MUST have logically consistent wave assignments.`);
-  lines.push(``);
-  lines.push(`Wave validation rules:`);
-  lines.push(`1. Wave N+1 tasks MUST NOT depend on tasks that should be in Wave N`);
-  lines.push(`2. Each wave MUST be independently validateable`);
-  lines.push(`3. If Wave 1 is missing critical dependencies for validation:`);
-  lines.push(`   - This indicates a plan error, not implementation errors`);
-  lines.push(`   - The missing tasks should have been in Wave 1 originally`);
-  lines.push(`   - Options: Report to user, consult @oracle, or stop`);
-  lines.push(``);
-  lines.push(`Before creating todo list, ask: "Can each wave be validated in isolation?"`);
-  lines.push(`If NO - the plan has structure errors that must be fixed first.`);
+  lines.push(`- Solution: consult @oracle before proceeding`);
   lines.push(``);
   lines.push(`---`);
   lines.push(``);
@@ -156,75 +176,58 @@ function getAtlasPrompt() {
   lines.push(`- Use todowrite tool to create the todo list`);
   lines.push(`- Display the todo list to the user`);
   lines.push(``);
-  lines.push(`### Step 3: Delegate Wave 1 Builder Tasks Only`);
-  lines.push(`- Delegate ONLY the builder tasks in Wave 1 (NOT the validator task)`);
-  lines.push(`- Use the task tool for each builder task`);
-  lines.push(`- Do NOT wait for user input - delegate immediately`);
-  lines.push(`- IMPORTANT: Do NOT delegate the validator task yet`);
-  lines.push(`- The validator task will be delegated AFTER all builder tasks complete`);
-  lines.push(`- **CRITICAL**: Atlas MUST delegate using task() - automatic delegation is MANDATORY`);
+  lines.push(`### Step 3: Delegate Wave Builder Tasks (ALL AT ONCE)`);
+  lines.push(`- Delegate ALL builder tasks in the current wave IMMEDIATELY`);
+  lines.push(`- Use task() with run_in_background=true for each task`);
+  lines.push(`- Do NOT wait between delegations`);
+  lines.push(`- Do NOT delegate the validator task yet`);
+  lines.push(`- Do NOT use task_status tool`);
+  lines.push(`- Do NOT poll or check for completion`);
   lines.push(``);
-  lines.push(`### Step 4: Wait for Builder Tasks, Then Validate`);
-  lines.push(`- Wait for ALL builder tasks in current wave to complete`);
-  lines.push(`- After all builder tasks are done, delegate the @validator task for that wave`);
-  lines.push(`- Wait for validator task to complete and report status`);
-  lines.push(`- CRITICAL: If validator reports \u274C (any error/failure), DO NOT proceed`);
-  lines.push(`- If validator reports \u274C: Reassign failed tasks to appropriate agents for fixes`);
-  lines.push(`- Re-run validation after fixes`);
-  lines.push(`- **After 3 failed validations, consult @oracle for guidance**`);
-  lines.push(`- ONLY when validator reports \u2713 (full success): Proceed to next wave`);
+  lines.push(`### Step 4: Wait for "All agents idle"`);
+  lines.push(`- Wait for the "All agents idle" notification`);
+  lines.push(`- Do NOT check status - wait for notification`);
+  lines.push(`- When notification arrives, update todo list`);
+  lines.push(`- Then delegate the validator task`);
   lines.push(``);
-  lines.push(`### Step 5: Delegate Next Wave (Only After Validation)`);
-  lines.push(`- Once current wave is validated (\u2713), update todo list status`);
-  lines.push(`- Delegate ONLY the builder tasks in the next wave`);
-  lines.push(`- Do NOT include the next wave's validator task yet`);
-  lines.push(`- Repeat Steps 4-5 for each subsequent wave`);
+  lines.push(`### Step 5: Validate and Continue`);
+  lines.push(`- Wait for validator report`);
+  lines.push(`- CRITICAL: If validator reports any errors:`);
+  lines.push(`  1. DO NOT proceed to next wave`);
+  lines.push(`  2. Reassign failed tasks to appropriate agents`);
+  lines.push(`  3. Re-run validation after fixes`);
+  lines.push(`  4. **After 3 failed validations, consult @oracle**`);
+  lines.push(`- ONLY when validator reports success: Proceed to next wave`);
   lines.push(``);
   lines.push(`---`);
   lines.push(``);
   lines.push(`## Mandatory Rules`);
   lines.push(``);
-  lines.push(`1. Every builder task MUST have a corresponding @validator task in the todo list`);
+  lines.push(`1. Every wave MUST have a corresponding @validator task in the todo list`);
   lines.push(`2. Validator tasks MUST be separate todo items with agent: "@validator"`);
   lines.push(`3. Never write code yourself - always delegate to builder agents`);
-  lines.push(`4. Never run tests or validation yourself - always delegate to @validator`);
-  lines.push(`5. Only delegate builder tasks first - validator tasks come AFTER all builder tasks complete`);
-  lines.push(`6. NEVER delegate the next wave's tasks until current wave's validator reports \u2713`);
+  lines.push(`4. Never run tests or validation yourself`);
+  lines.push(`5. Only delegate builder tasks first - validator tasks come AFTER "All agents idle"`);
+  lines.push(`6. NEVER delegate the next wave's tasks until current wave's validator reports success`);
   lines.push(`7. Use todowrite tool to create the todo list - don't just display text (this is MANDATORY)`);
   lines.push(`8. Only read .prometheus/project-plan.md - no other file reading`);
   lines.push(`9. **After 3 failed validations, MUST consult @oracle for guidance**`);
-  lines.push(``);
-  lines.push(`## CRITICAL: Validation Failure Handling`);
-  lines.push(``);
-  lines.push(`IF VALIDATOR REPORTS ANY ERRORS OR FAILURES:`);
-  lines.push(`1. The wave is NOT complete - DO NOT proceed to next wave`);
-  lines.push(`2. If you can fix it yourself: DO NOT - you must delegate to appropriate agent`);
-  lines.push(`3. If validator found errors, reassign the failed tasks to appropriate agent`);
-  lines.push(`4. Re-run validation after fixes`);
-  lines.push(`5. **After 3 failed validations, MUST consult @oracle for guidance**`);
-  lines.push(`6. ONLY proceed when validator reports \u2713 (full success)`);
-  lines.push(``);
-  lines.push(`DO NOT:`);
-  lines.push(`- Ignore validator findings because they're "expected" or "will be resolved later"`);
-  lines.push(`- Mark a wave as complete when validator reports \u274C or partial success`);
-  lines.push(`- Move to next wave without explicit \u2713 from validator`);
-  lines.push(``);
-  lines.push(`---`);
+  lines.push(`10. **NEVER use task_status tool - wait for "All agents idle" notification**`);
   lines.push(``);
   lines.push(`## STARTUP: When user types /execute-plan`);
   lines.push(``);
-  lines.push(`STEP-BY-STEP PROCEDURE (REPEAT LOOP UNTIL ALL WAVES COMPLETE):`);
+  lines.push(`STEP-BY-STEP PROCEDURE:`);
   lines.push(`1. Read .prometheus/project-plan.md`);
   lines.push(`2. CREATE TODO LIST USING todowrite TOOL (MANDATORY - use the exact JSON structure)`);
   lines.push(`3. Show todo list to user`);
-  lines.push(`4. Delegate Wave 1 builder tasks ONLY - do NOT delegate the validator task yet`);
-  lines.push(`5. Wait for all builder tasks to complete`);
-  lines.push(`6. Delegate Wave 1 validator task`);
+  lines.push(`4. Delegate ALL Wave 1 builder tasks at once with run_in_background=true`);
+  lines.push(`5. WAIT for "All agents idle" notification before delegating wave's @validator task (do NOT check status)`);
+  lines.push(`6. Update todo list, delegate Wave 1 validator task`);
   lines.push(`7. Wait for validator report`);
-  lines.push(`8. IF validator reports \u2713: Update todo list status, delegate next wave builder tasks`);
-  lines.push(`9. IF validator reports \u274C: Reassign failed tasks, re-run validation`);
-  lines.push(`10. After 3 failed validations: Consult @oracle for guidance`);
-  lines.push(`11. REPEAT steps 5-10 for each subsequent wave until all waves complete`);
+  lines.push(`8. IF validator success: Update todo list, delegate Wave 2 builder tasks`);
+  lines.push(`9. IF validator errors: Reassign failed tasks, re-run validation`);
+  lines.push(`10. **After 3 failed validations: Consult @oracle for guidance**`);
+  lines.push(`11. REPEAT steps 5-10 for each wave until all complete`);
   return lines.join(`
 `);
 }
@@ -486,6 +489,255 @@ function loadBuiltinCommandsAsRecord() {
 }
 var init_command_discovery = __esm(() => {
   init_commands();
+});
+
+// src/tools/delegate-task/llama-slot.ts
+var exports_llama_slot = {};
+__export(exports_llama_slot, {
+  isSlotBusy: () => isSlotBusy,
+  isAgentIdle: () => isAgentIdle,
+  getIdleInstance: () => getIdleInstance,
+  getFallbackInstance: () => getFallbackInstance,
+  getAllAgentTypes: () => getAllAgentTypes,
+  getAgentConfig: () => getAgentConfig,
+  anyAgentBusy: () => anyAgentBusy
+});
+import { readFile } from "fs/promises";
+import { join } from "path";
+async function loadConfigs() {
+  if (configsLoaded)
+    return;
+  const [opencodeRaw, openagentRaw] = await Promise.all([
+    readFile(OPENCODE_CONFIG, "utf-8"),
+    readFile(OPENAGENT_CONFIG, "utf-8")
+  ]);
+  const opencode = JSON.parse(opencodeRaw);
+  const openagent = JSON.parse(openagentRaw);
+  for (const [providerID, provider] of Object.entries(opencode.provider)) {
+    if (provider.options?.baseURL) {
+      providerBaseURLs.set(providerID, provider.options.baseURL);
+    }
+    for (const [modelID, model] of Object.entries(provider.models)) {
+      if (model.options?.id_slot !== undefined) {
+        const fullModelID = modelID;
+        modelSlotIds.set(fullModelID, model.options.id_slot);
+      }
+    }
+  }
+  for (const [agentType, config2] of Object.entries(openagent.agents)) {
+    const agentConfig = config2;
+    if (!agentConfig.instances)
+      continue;
+    const instances = [];
+    let baseURL = "";
+    for (let i = 0;i < agentConfig.instances.length; i++) {
+      const instance = agentConfig.instances[i];
+      const [providerID, modelID] = instance.model.split("/");
+      const slotId = modelSlotIds.get(modelID) ?? 0;
+      const llamaModelID = modelID.replace(/-\d+$/, "");
+      if (!baseURL) {
+        baseURL = providerBaseURLs.get(providerID) ?? "";
+      }
+      instances.push({
+        agentType,
+        instanceIndex: i,
+        model: instance.model,
+        providerID,
+        modelID,
+        llamaModelID,
+        slotId,
+        fallback: instance.fallback
+      });
+    }
+    agentConfigs.set(agentType, { instances, baseURL });
+  }
+  configsLoaded = true;
+}
+async function getAgentConfig(agentType) {
+  await loadConfigs();
+  return agentConfigs.get(agentType);
+}
+async function getAllAgentTypes() {
+  await loadConfigs();
+  return Array.from(agentConfigs.keys());
+}
+async function isSlotBusy(providerID, llamaModelID, slotId) {
+  await loadConfigs();
+  const baseURL = providerBaseURLs.get(providerID);
+  if (!baseURL) {
+    throw new Error(`Unknown provider: ${providerID}`);
+  }
+  try {
+    const response = await fetch(`${baseURL}/slots?model=${llamaModelID}`);
+    if (!response.ok) {
+      throw new Error(`Failed to query slots: ${response.status}`);
+    }
+    const slots = await response.json();
+    const slot = slots.find((s) => s.id === slotId);
+    return slot?.is_processing ?? false;
+  } catch (err) {
+    throw new Error(`Provider ${providerID} unreachable: ${err}`);
+  }
+}
+async function isAgentIdle(agentType) {
+  const config2 = await getAgentConfig(agentType);
+  if (!config2) {
+    throw new Error(`Unknown agent type: ${agentType}`);
+  }
+  for (const instance of config2.instances) {
+    const busy = await isSlotBusy(instance.providerID, instance.llamaModelID, instance.slotId);
+    if (busy)
+      return false;
+  }
+  return true;
+}
+async function getIdleInstance(agentType) {
+  const config2 = await getAgentConfig(agentType);
+  if (!config2) {
+    throw new Error(`Unknown agent type: ${agentType}`);
+  }
+  for (const instance of config2.instances) {
+    const busy = await isSlotBusy(instance.providerID, instance.llamaModelID, instance.slotId);
+    if (!busy)
+      return instance;
+  }
+  return;
+}
+async function getFallbackInstance(agentType) {
+  const config2 = await getAgentConfig(agentType);
+  if (!config2) {
+    throw new Error(`Unknown agent type: ${agentType}`);
+  }
+  const firstInstance = config2.instances[0];
+  if (!firstInstance?.fallback)
+    return;
+  for (const fallbackAgent of firstInstance.fallback) {
+    const idleInstance = await getIdleInstance(fallbackAgent);
+    if (idleInstance) {
+      return {
+        ...idleInstance,
+        fallback: undefined
+      };
+    }
+  }
+  return;
+}
+async function anyAgentBusy() {
+  await loadConfigs();
+  for (const [agentType, config2] of agentConfigs.entries()) {
+    for (const instance of config2.instances) {
+      const busy = await isSlotBusy(instance.providerID, instance.modelID, instance.slotId);
+      if (busy)
+        return true;
+    }
+  }
+  return false;
+}
+var CONFIG_DIR = "/root/.config/opencode", OPENCODE_CONFIG, OPENAGENT_CONFIG, configsLoaded = false, providerBaseURLs, modelSlotIds, agentConfigs;
+var init_llama_slot = __esm(() => {
+  OPENCODE_CONFIG = join(CONFIG_DIR, "opencode.json");
+  OPENAGENT_CONFIG = join(CONFIG_DIR, "open-agent.json");
+  providerBaseURLs = new Map;
+  modelSlotIds = new Map;
+  agentConfigs = new Map;
+});
+
+// src/tools/delegate-task/task-queue.ts
+var exports_task_queue = {};
+__export(exports_task_queue, {
+  stopPolling: () => stopPolling,
+  startPolling: () => startPolling,
+  markSlotIdle: () => markSlotIdle,
+  markSlotBusy: () => markSlotBusy,
+  initQueue: () => initQueue,
+  getQueueLength: () => getQueueLength,
+  getBusyCount: () => getBusyCount,
+  enqueue: () => enqueue
+});
+function initQueue(_onIdleCallback, onAllIdleCallback) {
+  instance.onAllIdle = onAllIdleCallback;
+}
+function enqueue(task, requestedAgent) {
+  if (instance.queue.length >= MAX_QUEUE_SIZE) {
+    return {
+      success: false,
+      message: `Queue full (${MAX_QUEUE_SIZE} max). Task not queued.`
+    };
+  }
+  instance.queue.push({
+    task,
+    requestedAgent,
+    queuedAt: new Date
+  });
+  return {
+    success: true,
+    message: `Task queued (${instance.queue.length} in queue)`
+  };
+}
+function startPolling(processTask) {
+  if (instance.pollingInterval)
+    return;
+  instance.pollingInterval = setInterval(async () => {
+    await processQueue(processTask);
+  }, 1e4);
+}
+function stopPolling() {
+  if (instance.pollingInterval) {
+    clearInterval(instance.pollingInterval);
+    instance.pollingInterval = null;
+  }
+}
+async function processQueue(processTask) {
+  const busy = await anyAgentBusy();
+  if (busy) {
+    instance.wasBusy = true;
+  } else if (instance.wasBusy) {
+    instance.wasBusy = false;
+    instance.onAllIdle?.();
+  }
+  if (instance.queue.length === 0)
+    return;
+  const task = instance.queue[0];
+  let inst = await getIdleInstance(task.requestedAgent);
+  if (!inst) {
+    inst = await getFallbackInstance(task.requestedAgent);
+  }
+  if (inst) {
+    instance.queue.shift();
+    instance.busyCount++;
+    await processTask(task, inst);
+    if (instance.busyCount === 1) {
+      instance.wasBusy = true;
+    }
+  }
+}
+function markSlotBusy(_agentType) {
+  instance.busyCount++;
+  instance.wasBusy = true;
+}
+function markSlotIdle(_agentType) {
+  instance.busyCount = Math.max(0, instance.busyCount - 1);
+  if (instance.busyCount === 0) {
+    instance.wasBusy = false;
+    instance.onAllIdle?.();
+  }
+}
+function getQueueLength() {
+  return instance.queue.length;
+}
+function getBusyCount() {
+  return instance.busyCount;
+}
+var MAX_QUEUE_SIZE = 50, instance;
+var init_task_queue = __esm(() => {
+  init_llama_slot();
+  instance = {
+    queue: [],
+    busyCount: 0,
+    wasBusy: false,
+    onAllIdle: null,
+    pollingInterval: null
+  };
 });
 
 // src/agents/types.ts
@@ -1101,11 +1353,10 @@ function createPluginInterface(args) {
     "command.execute.before": createCommandExecuteBeforeHandler({
       hooks
     }),
-    "chat.message": createChatMessageHandler({
-      ctx,
-      pluginConfig,
-      hooks
-    }),
+    "chat.message": async (input, output) => {
+      await hooks.backgroundNotificationHook?.["chat.message"]?.(input, output);
+      return createChatMessageHandler({ ctx, pluginConfig, hooks })(input, output);
+    },
     "experimental.chat.system.transform": createSystemTransformHandler(),
     config: managers.configHandler,
     event: async (input) => {
@@ -13614,46 +13865,54 @@ init_commands();
 
 // src/tools/delegate-task/index.ts
 function createDelegateTask(manager) {
-  const description = `Spawn agent task with background execution support.
+  const description = `Spawn agent task with pool-based execution and automatic fallback routing.
 
-**IMPORTANT**: You MUST provide subagent_type for delegation.
+**Pool-based Delegation**: Tasks are routed to available agent slots. If all slots
+for the requested agent are busy, tasks are automatically routed through the fallback chain.
 
-**CORRECT - Using subagent_type:**
+**Fallback Chain**: sisyphus-junior tasks can fall back to sisyphus or athena if all
+junior slots are busy. Other agents use their configured slots directly.
+
+**CORRECT Usage:**
 \`\`\`
-task(subagent_type="sisyphus-junior", load_skills=[], description="Initialize project", prompt="...", run_in_background=true)
+task(subagent_type="sisyphus-junior", prompt="...", run_in_background=true)
+task(subagent_type="athena", prompt="...", run_in_background=true)
 \`\`\`
 
-Available agents (subagent_type):
-- sisyphus: Backend/core logic
-- athena: UI/frontend
-- sisyphus-junior: Simple tasks
-- validator: QA/verification
+**Available Agents**:
+- sisyphus-junior: Small tasks (3 slots, fallback to sisyphus or athena)
+- sisyphus: Backend/core logic (1 slot)
+- athena: UI/frontend (1 slot)
+- validator: QA/verification (1 slot)
+- explorer: Code search
+- librarian: Documentation search
+- oracle: Consultation
 
-Parameters:
-- subagent_type: REQUIRED - which agent to spawn
-- load_skills: ALWAYS pass [] or specific skills
-- description: Short task description
-- prompt: Full task instructions
-- run_in_background: true=async (don't wait), false=sync (wait for completion)
+**Parameters**:
+- subagent_type: REQUIRED - which agent pool to use
+- prompt: Task instructions
+- run_in_background: true=async (always recommended)
 
-**Use run_in_background=true for parallel delegation of multiple independent tasks.**`;
+**Notifications**:
+- When all builder agents complete: "All agents idle"
+- Queued tasks are assigned automatically when slots become available`;
   return tool({
     description,
     args: {
-      subagent_type: tool.schema.string().describe("REQUIRED: Agent type (sisyphus, athena, sisyphus-junior, validator)"),
-      load_skills: tool.schema.array(tool.schema.string()).describe("Always pass [] if no skills needed"),
+      subagent_type: tool.schema.string().describe("REQUIRED: Agent pool (sisyphus-junior, athena, sisyphus, validator, etc.)"),
+      load_skills: tool.schema.array(tool.schema.string()).describe("Always pass []"),
       description: tool.schema.string().optional().describe("Short task description"),
       prompt: tool.schema.string().describe("Task instructions for the agent"),
-      run_in_background: tool.schema.boolean().describe("true=async (no waiting), false=sync (wait for completion)"),
-      parent_session_id: tool.schema.string().optional().describe("Parent session for context (auto-filled if not provided)")
+      run_in_background: tool.schema.boolean().describe("true=async, false=sync"),
+      parent_session_id: tool.schema.string().optional().describe("Parent session")
     },
     async execute(args, toolContext) {
       const ctx = toolContext;
       if (args.run_in_background === undefined) {
-        return "Error: run_in_background parameter is REQUIRED. Use true for parallel delegation.";
+        return "Error: run_in_background is REQUIRED. Use true for parallel delegation.";
       }
       if (!args.subagent_type) {
-        return "Error: subagent_type is REQUIRED for delegation.";
+        return "Error: subagent_type is REQUIRED.";
       }
       const description2 = args.description || `Task: ${args.prompt.slice(0, 50)}`;
       if (args.run_in_background) {
@@ -13663,30 +13922,56 @@ Parameters:
           agent: args.subagent_type,
           parentSessionID: ctx.sessionID || "main"
         });
-        return `Background task launched.
+        let msg = `Background task launched.
 
 Task ID: ${task.id}
-Agent: ${task.agent}
-Status: ${task.status}
+Requested: ${task.requestedAgent}
+Assigned: ${task.agent}
+Status: ${task.status}`;
+        if (task.model) {
+          msg += `
+Model: ${task.model.providerID}/${task.model.modelID} (slot ${task.model.slotId})`;
+        }
+        if (task.status === "queued") {
+          msg += `
+Task queued - will be assigned when slot available.`;
+        }
+        msg += `
 
-Use task_status tool with task_id="${task.id}" to check progress. Do not run more than once every 90 seconds`;
+You will receive "All agents idle" when all tasks complete.`;
+        return msg;
       } else {
-        return `Sync execution requested. Use run_in_background=true for parallel delegation.
-Task would run: ${description2}
-Agent: ${args.subagent_type}`;
+        return `Sync execution not supported. Use run_in_background=true.`;
       }
     }
   });
 }
 
 // src/tools/delegate-task/manager.ts
+init_llama_slot();
+init_task_queue();
+
 class SimpleBackgroundManager {
   tasks = new Map;
   client;
   directory;
+  mainSessionID;
+  pollingInterval = null;
+  notificationPending = false;
+  pendingNotifications = [];
   constructor(ctx) {
     this.client = ctx.client;
     this.directory = ctx.directory;
+    this.mainSessionID = ctx.sessionID || "main";
+    initQueue((_agentType) => {}, () => {
+      this.queueAllIdleNotification();
+    });
+  }
+  getPendingNotifications() {
+    return [...this.pendingNotifications];
+  }
+  clearPendingNotifications() {
+    this.pendingNotifications = [];
   }
   async launch(input) {
     const task = {
@@ -13696,20 +13981,62 @@ class SimpleBackgroundManager {
       parentSessionID: input.parentSessionID,
       description: input.description,
       prompt: input.prompt,
-      agent: input.agent
+      agent: input.agent,
+      requestedAgent: input.agent
     };
     this.tasks.set(task.id, task);
-    this.startTask(task).catch((err) => {
-      console.error("[simple-bg-manager] startTask error:", err);
-      task.status = "error";
-      task.error = err instanceof Error ? err.message : String(err);
-      task.completedAt = new Date;
-    });
+    const idleInstance = await getIdleInstance(input.agent);
+    if (idleInstance) {
+      task.status = "running";
+      task.startedAt = new Date;
+      task.agent = `${idleInstance.agentType}-${idleInstance.instanceIndex}`;
+      task.model = {
+        providerID: idleInstance.providerID,
+        modelID: idleInstance.modelID,
+        llamaModelID: idleInstance.llamaModelID,
+        slotId: idleInstance.slotId
+      };
+      markSlotBusy(idleInstance.agentType);
+      this.startTask(task).catch((err) => {
+        console.error("[manager] startTask error:", err);
+        task.status = "error";
+        task.error = err instanceof Error ? err.message : String(err);
+        task.completedAt = new Date;
+        markSlotIdle(idleInstance.agentType);
+      });
+    } else {
+      const fallbackInstance = await getFallbackInstance(input.agent);
+      if (fallbackInstance) {
+        task.status = "running";
+        task.startedAt = new Date;
+        task.agent = `${fallbackInstance.agentType}-${fallbackInstance.instanceIndex}`;
+        task.model = {
+          providerID: fallbackInstance.providerID,
+          modelID: fallbackInstance.modelID,
+          llamaModelID: fallbackInstance.llamaModelID,
+          slotId: fallbackInstance.slotId
+        };
+        markSlotBusy(fallbackInstance.agentType);
+        this.startTask(task).catch((err) => {
+          console.error("[manager] startTask error:", err);
+          task.status = "error";
+          task.error = err instanceof Error ? err.message : String(err);
+          task.completedAt = new Date;
+          markSlotIdle(fallbackInstance.agentType);
+        });
+      } else {
+        const result = enqueue(task, input.agent);
+        if (result.success) {
+          task.status = "queued";
+        } else {
+          task.status = "error";
+          task.error = result.message;
+        }
+      }
+    }
     return { ...task };
   }
   async startTask(task) {
-    task.status = "running";
-    task.startedAt = new Date;
     const createResult = await this.client.session.create({
       body: {
         parentID: task.parentSessionID,
@@ -13725,16 +14052,102 @@ class SimpleBackgroundManager {
     await this.client.session.promptAsync({
       path: { id: sessionID },
       body: {
-        agent: task.agent,
+        agent: task.requestedAgent,
+        model: task.model ? {
+          providerID: task.model.providerID,
+          modelID: task.model.modelID
+        } : undefined,
         parts: [{ type: "text", text: task.prompt }]
       }
     });
+    this.startPolling();
+  }
+  startPolling() {
+    if (this.pollingInterval)
+      return;
+    this.pollingInterval = setInterval(() => {
+      this.pollTasks().catch(() => {});
+    }, 1e4);
+  }
+  async pollTasks() {
+    const { isSlotBusy: isSlotBusy2 } = await Promise.resolve().then(() => (init_llama_slot(), exports_llama_slot));
+    for (const task of this.tasks.values()) {
+      if (task.status !== "running" || !task.sessionID || !task.model)
+        continue;
+      try {
+        const busy = await isSlotBusy2(task.model.providerID, task.model.llamaModelID, task.model.slotId);
+        if (!busy) {
+          task.status = "completed";
+          task.completedAt = new Date;
+          const agentType = task.requestedAgent;
+          markSlotIdle(agentType);
+          this.processQueue();
+        }
+      } catch (_err) {}
+    }
+    const activeTasks = Array.from(this.tasks.values()).filter((t) => t.status === "running");
+    if (activeTasks.length === 0) {
+      if (this.pollingInterval) {
+        clearInterval(this.pollingInterval);
+        this.pollingInterval = null;
+      }
+    }
+  }
+  async processQueue() {
+    const { getQueueLength: getQueueLength2 } = await Promise.resolve().then(() => (init_task_queue(), exports_task_queue));
+    if (getQueueLength2() === 0)
+      return;
+    const { getIdleInstance: getIdleInstance2, getFallbackInstance: getFallbackInstance2 } = await Promise.resolve().then(() => (init_llama_slot(), exports_llama_slot));
+    const pendingTasks = Array.from(this.tasks.values()).filter((t) => t.status === "queued");
+    if (pendingTasks.length === 0)
+      return;
+    const task = pendingTasks[0];
+    let idleInstance = await getIdleInstance2(task.requestedAgent);
+    if (!idleInstance) {
+      idleInstance = await getFallbackInstance2(task.requestedAgent);
+    }
+    if (idleInstance) {
+      task.status = "running";
+      task.startedAt = new Date;
+      task.agent = `${idleInstance.agentType}-${idleInstance.instanceIndex}`;
+      task.model = {
+        providerID: idleInstance.providerID,
+        modelID: idleInstance.modelID,
+        llamaModelID: idleInstance.llamaModelID,
+        slotId: idleInstance.slotId
+      };
+      markSlotBusy(idleInstance.agentType);
+      this.startTask(task).catch((err) => {
+        console.error("[manager] startTask error:", err);
+        task.status = "error";
+        task.error = err instanceof Error ? err.message : String(err);
+        task.completedAt = new Date;
+        markSlotIdle(idleInstance.agentType);
+      });
+    }
   }
   getTask(id) {
     return this.tasks.get(id);
   }
   getAllTasks() {
     return Array.from(this.tasks.values());
+  }
+  getRunningTasks() {
+    return Array.from(this.tasks.values()).filter((t) => t.status === "running");
+  }
+  getQueuedTasks() {
+    return Array.from(this.tasks.values()).filter((t) => t.status === "queued");
+  }
+  queueAllIdleNotification() {
+    if (this.notificationPending)
+      return;
+    this.notificationPending = true;
+    const notification = `<system-reminder>
+[ALL AGENTS IDLE]
+All delegated builder tasks have completed. You may now delegate the validator task for this wave.
+</system-reminder>`;
+    this.pendingNotifications.push(notification);
+    this.notificationPending = false;
   }
 }
 
@@ -13760,15 +14173,22 @@ Parameters:
       if (!task) {
         return `Task not found: ${taskId}`;
       }
-      return `Task ID: ${task.id}
-Agent: ${task.agent}
+      let statusMsg = `Task ID: ${task.id}
+Requested: ${task.requestedAgent}
+Assigned: ${task.agent}
 Status: ${task.status}
 Description: ${task.description}
-Created: ${task.createdAt.toISOString()}
+Created: ${task.createdAt.toISOString()}`;
+      if (task.model) {
+        statusMsg += `
+Model: ${task.model.providerID}/${task.model.modelID} (slot ${task.model.slotId})`;
+      }
+      statusMsg += `
 ${task.startedAt ? `Started: ${task.startedAt.toISOString()}` : ""}
 ${task.completedAt ? `Completed: ${task.completedAt.toISOString()}` : ""}
 ${task.error ? `Error: ${task.error}` : ""}
 ${task.sessionID ? `Session: ${task.sessionID}` : ""}`;
+      return statusMsg;
     }
   });
 }
@@ -13801,8 +14221,33 @@ async function createTools(args) {
 
 // src/create-hooks.ts
 function createHooks(args) {
-  const { ctx, pluginConfig } = args;
-  return {};
+  const { ctx, pluginConfig, backgroundManager } = args;
+  const backgroundNotificationHook = {
+    "chat.message": async (input, output) => {
+      const notifications = backgroundManager.getPendingNotifications();
+      if (notifications.length === 0)
+        return;
+      backgroundManager.clearPendingNotifications();
+      const notificationText = notifications.join(`
+
+`);
+      const firstTextPartIndex = output.parts.findIndex((p) => p.type === "text");
+      if (firstTextPartIndex === -1) {
+        output.parts.unshift({ type: "text", text: notificationText });
+      } else {
+        const originalText = output.parts[firstTextPartIndex].text ?? "";
+        output.parts[firstTextPartIndex].text = `${notificationText}
+
+---
+
+${originalText}`;
+      }
+    },
+    event: async (_input) => {}
+  };
+  return {
+    backgroundNotificationHook
+  };
 }
 
 // src/create-managers.ts
@@ -27375,12 +27820,20 @@ function date8(params) {
 // node_modules/zod/v4/classic/external.js
 config2(en_default2());
 // src/config/schema/open-agent-config.ts
+var AgentInstanceSchema = exports_external2.object({
+  model: exports_external2.string(),
+  fallback: exports_external2.array(exports_external2.string()).optional()
+});
+var AgentConfigSchema = exports_external2.object({
+  mode: exports_external2.enum(["primary", "subagent"]).optional(),
+  instances: exports_external2.array(AgentInstanceSchema)
+});
 var OpenAgentConfigSchema = exports_external2.object({
-  disabled_agents: exports_external2.array(exports_external2.enum(["sisyphus", "atlas", "explorer", "librarian", "prometheus", "oracle", "designer", "sisyphus-junior", "validator", "hephaestus"])).optional(),
+  disabled_agents: exports_external2.array(exports_external2.enum(["sisyphus", "atlas", "explorer", "librarian", "prometheus", "oracle", "designer", "sisyphus-junior", "validator", "hephaestus", "athena", "metis", "momus", "oracle"])).optional(),
   agent_overrides: exports_external2.record(exports_external2.string(), exports_external2.any()).optional(),
   prompt_append: exports_external2.record(exports_external2.string(), exports_external2.string()).optional(),
   categories: exports_external2.record(exports_external2.string(), exports_external2.any()).optional(),
-  agents: exports_external2.record(exports_external2.string(), exports_external2.any()).optional()
+  agents: exports_external2.record(exports_external2.string(), AgentConfigSchema).optional()
 });
 
 // src/config/loader.ts
@@ -27457,8 +27910,15 @@ var OpenAgentPlugin = async (ctx) => {
     momus: createMomusAgent("anthropic/claude-sonnet-4-6")
   };
   for (const [agentName, agentConfig] of Object.entries(config3.agents ?? {})) {
-    if (agentConfig.model && agents[agentName]) {
-      agents[agentName].model = agentConfig.model;
+    const cfg = agentConfig;
+    let model;
+    if (cfg.model) {
+      model = cfg.model;
+    } else if (cfg.instances && cfg.instances.length > 0) {
+      model = cfg.instances[0].model;
+    }
+    if (model && agents[agentName]) {
+      agents[agentName].model = model;
     }
   }
   const managers = createManagers({ ctx, pluginConfig: config3 });
@@ -27468,7 +27928,8 @@ var OpenAgentPlugin = async (ctx) => {
   });
   const hooks = createHooks({
     ctx,
-    pluginConfig: config3
+    pluginConfig: config3,
+    backgroundManager: toolsResult.backgroundManager
   });
   const pluginInterface = createPluginInterface({
     ctx,

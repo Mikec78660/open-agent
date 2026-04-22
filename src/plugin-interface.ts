@@ -42,11 +42,13 @@ export function createPluginInterface(args: {
       hooks,
     }),
 
-    "chat.message": createChatMessageHandler({
-      ctx,
-      pluginConfig,
-      hooks,
-    }),
+    "chat.message": async (input: unknown, output: unknown) => {
+      await hooks.backgroundNotificationHook?.["chat.message"]?.(
+        input as { sessionID: string },
+        output as { parts: Array<{ type: string; text?: string }> }
+      );
+      return createChatMessageHandler({ ctx, pluginConfig, hooks })(input, output);
+    },
 
     "experimental.chat.system.transform": createSystemTransformHandler(),
 
@@ -67,5 +69,5 @@ export function createPluginInterface(args: {
      }),
 
      "tool.definition": createToolDefinitionHandler(),
-   };
- }
+  };
+}
