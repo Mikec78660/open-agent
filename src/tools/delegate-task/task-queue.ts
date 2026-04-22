@@ -2,7 +2,7 @@
 //  Task queue management with fallback routing
 //  Queues overflow tasks when all agent slots are busy
 //  Routes queued tasks when slots become available
-//  Sends "All agents idle" notification when all slots go idle
+//  Sends "All agents idle" notification when all slots go idle for 2 consecutive checks
 //  
 //  Created on: Wed Apr 22 2026
 //      Author: GPU-Server/Qwen3.6-35B-A3B-Q8_0
@@ -16,6 +16,7 @@ import {
 } from "./llama-slot";
 
 const MAX_QUEUE_SIZE = 50;
+const IDLE_CHECKS_BEFORE_NOTIFY = 2;
 
 interface QueuedTask {
   task: BackgroundTask;
@@ -30,12 +31,14 @@ let instance: {
   queue: QueuedTask[];
   busyCount: number;
   wasBusy: boolean;
+  consecutiveIdleChecks: number;
   onAllIdle: AllIdleCallback | null;
   pollingInterval: ReturnType<typeof setInterval> | null;
 } = {
   queue: [],
   busyCount: 0,
   wasBusy: false,
+  consecutiveIdleChecks: 0,
   onAllIdle: null,
   pollingInterval: null,
 };
@@ -91,9 +94,14 @@ async function processQueue(processTask: (task: QueuedTask, instance: AgentInsta
 
   if (busy) {
     instance.wasBusy = true;
+    instance.consecutiveIdleChecks = 0;
   } else if (instance.wasBusy) {
-    instance.wasBusy = false;
-    instance.onAllIdle?.();
+    instance.consecutiveIdleChecks++;
+    if (instance.consecutiveIdleChecks >= IDLE_CHECKS_BEFORE_NOTIFY) {
+      instance.wasBusy = false;
+      instance.consecutiveIdleChecks = 0;
+      instance.onAllIdle?.();
+    }
   }
 
   if (instance.queue.length === 0) return;
@@ -112,6 +120,7 @@ async function processQueue(processTask: (task: QueuedTask, instance: AgentInsta
 
     if (instance.busyCount === 1) {
       instance.wasBusy = true;
+      instance.consecutiveIdleChecks = 0;
     }
   }
 }
@@ -119,6 +128,7 @@ async function processQueue(processTask: (task: QueuedTask, instance: AgentInsta
 export function markSlotBusy(_agentType: string): void {
   instance.busyCount++;
   instance.wasBusy = true;
+  instance.consecutiveIdleChecks = 0;
 }
 
 export function markSlotIdle(_agentType: string): void {
@@ -126,7 +136,6 @@ export function markSlotIdle(_agentType: string): void {
 
   if (instance.busyCount === 0) {
     instance.wasBusy = false;
-    instance.onAllIdle?.();
   }
 }
 

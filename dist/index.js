@@ -691,9 +691,14 @@ async function processQueue(processTask) {
   const busy = await anyAgentBusy();
   if (busy) {
     instance.wasBusy = true;
+    instance.consecutiveIdleChecks = 0;
   } else if (instance.wasBusy) {
-    instance.wasBusy = false;
-    instance.onAllIdle?.();
+    instance.consecutiveIdleChecks++;
+    if (instance.consecutiveIdleChecks >= IDLE_CHECKS_BEFORE_NOTIFY) {
+      instance.wasBusy = false;
+      instance.consecutiveIdleChecks = 0;
+      instance.onAllIdle?.();
+    }
   }
   if (instance.queue.length === 0)
     return;
@@ -708,18 +713,19 @@ async function processQueue(processTask) {
     await processTask(task, inst);
     if (instance.busyCount === 1) {
       instance.wasBusy = true;
+      instance.consecutiveIdleChecks = 0;
     }
   }
 }
 function markSlotBusy(_agentType) {
   instance.busyCount++;
   instance.wasBusy = true;
+  instance.consecutiveIdleChecks = 0;
 }
 function markSlotIdle(_agentType) {
   instance.busyCount = Math.max(0, instance.busyCount - 1);
   if (instance.busyCount === 0) {
     instance.wasBusy = false;
-    instance.onAllIdle?.();
   }
 }
 function getQueueLength() {
@@ -728,13 +734,14 @@ function getQueueLength() {
 function getBusyCount() {
   return instance.busyCount;
 }
-var MAX_QUEUE_SIZE = 50, instance;
+var MAX_QUEUE_SIZE = 50, IDLE_CHECKS_BEFORE_NOTIFY = 2, instance;
 var init_task_queue = __esm(() => {
   init_llama_slot();
   instance = {
     queue: [],
     busyCount: 0,
     wasBusy: false,
+    consecutiveIdleChecks: 0,
     onAllIdle: null,
     pollingInterval: null
   };
