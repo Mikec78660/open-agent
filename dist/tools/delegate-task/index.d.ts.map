@@ -1,1 +1,1 @@
-{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../src/tools/delegate-task/index.ts"],"names":[],"mappings":"AASA,OAAO,EAAQ,KAAK,cAAc,EAAE,MAAM,qBAAqB,CAAC;AAEhE,OAAO,EAAE,uBAAuB,EAAE,MAAM,WAAW,CAAC;AAEpD,wBAAgB,kBAAkB,CAAC,OAAO,EAAE,uBAAuB,GAAG,cAAc,CAuFnF"}
+{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../src/tools/delegate-task/index.ts"],"names":[],"mappings":"AAQA,OAAO,EAAQ,KAAK,cAAc,EAAE,MAAM,qBAAqB,CAAC;AAEhE,OAAO,EAAE,uBAAuB,EAAE,MAAM,WAAW,CAAC;AAEpD,wBAAgB,kBAAkB,CAAC,OAAO,EAAE,uBAAuB,GAAG,cAAc,CAgFnF"}

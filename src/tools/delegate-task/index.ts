@@ -6,7 +6,6 @@
 //  
 //  Created on: Wed Apr 22 2026
 //      Author: GPU-Server/Qwen3.6-35B-A3B-Q8_0
-
 import { tool, type ToolDefinition } from "@opencode-ai/plugin";
 import type { DelegateTaskArgs } from "./types";
 import { SimpleBackgroundManager } from "./manager";
@@ -78,19 +77,12 @@ task(subagent_type="athena", prompt="...", run_in_background=true)
         let msg = `Background task launched.
 
 Task ID: ${task.id}
-Requested: ${task.requestedAgent}
-Assigned: ${task.agent}
+Agent: ${task.requestedAgent}
 Status: ${task.status}`;
-
-        if (task.model) {
-          msg += `\nModel: ${task.model.providerID}/${task.model.modelID} (slot ${task.model.slotId})`;
-        }
 
         if (task.status === "queued") {
           msg += `\nTask queued - will be assigned when slot available.`;
         }
-
-        msg += `\n\nYou will receive "All agents idle" when all tasks complete.`;
 
         return msg;
       } else {
