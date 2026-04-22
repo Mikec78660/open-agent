@@ -1353,10 +1353,11 @@ function createPluginInterface(args) {
     "command.execute.before": createCommandExecuteBeforeHandler({
       hooks
     }),
-    "chat.message": async (input, output) => {
-      await hooks.backgroundNotificationHook?.["chat.message"]?.(input, output);
-      return createChatMessageHandler({ ctx, pluginConfig, hooks })(input, output);
-    },
+    "chat.message": createChatMessageHandler({
+      ctx,
+      pluginConfig,
+      hooks
+    }),
     "experimental.chat.system.transform": createSystemTransformHandler(),
     config: managers.configHandler,
     event: async (input) => {
@@ -13950,21 +13951,18 @@ class SimpleBackgroundManager {
   mainSessionID;
   pollingInterval = null;
   notificationPending = false;
-  pendingNotifications = [];
   constructor(ctx) {
     this.client = ctx.client;
     this.directory = ctx.directory;
     this.mainSessionID = ctx.sessionID || "main";
     initQueue((_agentType) => {}, () => {
-      this.queueAllIdleNotification();
+      this.sendAllIdleNotification();
     });
   }
   getPendingNotifications() {
-    return [...this.pendingNotifications];
+    return [];
   }
-  clearPendingNotifications() {
-    this.pendingNotifications = [];
-  }
+  clearPendingNotifications() {}
   async launch(input) {
     const task = {
       id: `bg_${crypto.randomUUID().slice(0, 8)}`,
@@ -14130,7 +14128,7 @@ class SimpleBackgroundManager {
   getQueuedTasks() {
     return Array.from(this.tasks.values()).filter((t) => t.status === "queued");
   }
-  queueAllIdleNotification() {
+  sendAllIdleNotification() {
     if (this.notificationPending)
       return;
     this.notificationPending = true;
@@ -14138,7 +14136,13 @@ class SimpleBackgroundManager {
 [ALL AGENTS IDLE]
 All delegated builder tasks have completed. You may now delegate the validator task for this wave.
 </system-reminder>`;
-    this.pendingNotifications.push(notification);
+    this.client.session.promptAsync({
+      path: { id: this.mainSessionID },
+      body: {
+        noReply: true,
+        parts: [{ type: "text", text: notification }]
+      }
+    }).catch(() => {});
     this.notificationPending = false;
   }
 }
@@ -14213,33 +14217,7 @@ async function createTools(args) {
 
 // src/create-hooks.ts
 function createHooks(args) {
-  const { ctx, pluginConfig, backgroundManager } = args;
-  const backgroundNotificationHook = {
-    "chat.message": async (input, output) => {
-      const notifications = backgroundManager.getPendingNotifications();
-      if (notifications.length === 0)
-        return;
-      backgroundManager.clearPendingNotifications();
-      const notificationText = notifications.join(`
-
-`);
-      const firstTextPartIndex = output.parts.findIndex((p) => p.type === "text");
-      if (firstTextPartIndex === -1) {
-        output.parts.unshift({ type: "text", text: notificationText });
-      } else {
-        const originalText = output.parts[firstTextPartIndex].text ?? "";
-        output.parts[firstTextPartIndex].text = `${notificationText}
-
----
-
-${originalText}`;
-      }
-    },
-    event: async (_input) => {}
-  };
-  return {
-    backgroundNotificationHook
-  };
+  return {};
 }
 
 // src/create-managers.ts
@@ -27920,8 +27898,7 @@ var OpenAgentPlugin = async (ctx) => {
   });
   const hooks = createHooks({
     ctx,
-    pluginConfig: config3,
-    backgroundManager: toolsResult.backgroundManager
+    pluginConfig: config3
   });
   const pluginInterface = createPluginInterface({
     ctx,

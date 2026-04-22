@@ -66,7 +66,6 @@ const OpenAgentPlugin = async (ctx: PluginContext) => {
   const hooks = createHooks({
     ctx,
     pluginConfig: config,
-    backgroundManager: toolsResult.backgroundManager,
   });
 
   const pluginInterface = createPluginInterface({

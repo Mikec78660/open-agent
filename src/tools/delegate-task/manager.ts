@@ -23,7 +23,6 @@ export class SimpleBackgroundManager {
   private mainSessionID: string;
   private pollingInterval: ReturnType<typeof setInterval> | null = null;
   private notificationPending: boolean = false;
-  private pendingNotifications: string[] = [];
 
   constructor(ctx: PluginContext) {
     this.client = ctx.client;
@@ -33,17 +32,16 @@ export class SimpleBackgroundManager {
     initQueue(
       (_agentType: string) => {},
       () => {
-        this.queueAllIdleNotification();
+        this.sendAllIdleNotification();
       }
     );
   }
 
   getPendingNotifications(): string[] {
-    return [...this.pendingNotifications];
+    return [];
   }
 
   clearPendingNotifications(): void {
-    this.pendingNotifications = [];
   }
 
   async launch(input: LaunchInput): Promise<BackgroundTask> {
@@ -243,7 +241,7 @@ export class SimpleBackgroundManager {
     return Array.from(this.tasks.values()).filter((t) => t.status === "queued");
   }
 
-  private queueAllIdleNotification(): void {
+  private sendAllIdleNotification(): void {
     if (this.notificationPending) return;
     this.notificationPending = true;
 
@@ -252,7 +250,14 @@ export class SimpleBackgroundManager {
 All delegated builder tasks have completed. You may now delegate the validator task for this wave.
 </system-reminder>`;
 
-    this.pendingNotifications.push(notification);
+    this.client.session.promptAsync({
+      path: { id: this.mainSessionID },
+      body: {
+        noReply: true,
+        parts: [{ type: "text", text: notification }],
+      },
+    }).catch(() => {});
+
     this.notificationPending = false;
   }
 }

@@ -7,7 +7,6 @@ export declare class SimpleBackgroundManager {
     private mainSessionID;
     private pollingInterval;
     private notificationPending;
-    private pendingNotifications;
     constructor(ctx: PluginContext);
     getPendingNotifications(): string[];
     clearPendingNotifications(): void;
@@ -20,6 +19,6 @@ export declare class SimpleBackgroundManager {
     getAllTasks(): BackgroundTask[];
     getRunningTasks(): BackgroundTask[];
     getQueuedTasks(): BackgroundTask[];
-    private queueAllIdleNotification;
+    private sendAllIdleNotification;
 }
 //# sourceMappingURL=manager.d.ts.map
