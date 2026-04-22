@@ -270,13 +270,10 @@ export class SimpleBackgroundManager {
       this.client.session.promptAsync({
         path: { id: sessionID },
         body: {
+          agent: "atlas",
           parts: [{ type: "text", text: notification }],
         },
-      }).then(() => {
-        console.log("[manager] Sent 'All agents idle' notification to session:", sessionID);
-      }).catch((err: Error) => {
-        console.error("[manager] Failed to send notification:", err.message);
-      });
+      }).catch(() => {});
     }
 
     this.notificationPending = false;
