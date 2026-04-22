@@ -14145,10 +14145,9 @@ class SimpleBackgroundManager {
     this.notificationPending = true;
     const notification = `[ALL AGENTS IDLE] All builder tasks complete. Delegate validator now.`;
     const sessionID = this.mainSessionID;
-    this.client.session.promptAsync({
+    this.client.session.prompt({
       path: { id: sessionID },
       body: {
-        agent: "atlas",
         parts: [{ type: "text", text: notification }]
       }
     }).then(() => {

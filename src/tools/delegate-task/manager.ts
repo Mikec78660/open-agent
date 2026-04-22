@@ -261,10 +261,9 @@ export class SimpleBackgroundManager {
 
     const sessionID = this.mainSessionID;
     
-    this.client.session.promptAsync({
+    this.client.session.prompt({
       path: { id: sessionID },
       body: {
-        agent: "atlas",
         parts: [{ type: "text", text: notification }],
       },
     }).then(() => {
