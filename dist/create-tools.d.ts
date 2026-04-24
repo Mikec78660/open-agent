@@ -11,5 +11,6 @@ export type CreateToolsResult = {
 export declare function createTools(args: {
     ctx: PluginContext;
     pluginConfig: OpenAgentConfig;
+    backgroundManager: SimpleBackgroundManager;
 }): Promise<CreateToolsResult>;
 //# sourceMappingURL=create-tools.d.ts.map

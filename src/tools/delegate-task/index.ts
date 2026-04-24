@@ -48,7 +48,7 @@ task(subagent_type="athena", prompt="...", run_in_background=true)
     args: {
       subagent_type: tool.schema.string().describe("REQUIRED: Agent pool (sisyphus-junior, athena, sisyphus, validator, etc.)"),
       load_skills: tool.schema.array(tool.schema.string()).describe("Always pass []"),
-      description: tool.schema.string().optional().describe("Short task description"),
+      description: tool.schema.string().describe("REQUIRED: Short task description/title"),
       prompt: tool.schema.string().describe("Task instructions for the agent"),
       run_in_background: tool.schema.boolean().describe("true=async, false=sync"),
       parent_session_id: tool.schema.string().optional().describe("Parent session"),
@@ -64,7 +64,10 @@ task(subagent_type="athena", prompt="...", run_in_background=true)
         return "Error: subagent_type is REQUIRED.";
       }
 
-      const description = args.description || `Task: ${args.prompt.slice(0, 50)}`;
+      if (!args.description) {
+        return "Error: description is REQUIRED.";
+      }
+      const description = args.description;
 
       if (args.run_in_background) {
         const task = await manager.launch({
@@ -86,7 +89,7 @@ Status: ${task.status}`;
 
         return msg;
       } else {
-        return `Sync execution not supported. Use run_in_background=true.`;
+        return `Error: Sync execution not supported. You MUST use run_in_background=true for all tasks including validator.`;
       }
     },
   });

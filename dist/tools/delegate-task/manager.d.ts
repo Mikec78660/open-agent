@@ -14,12 +14,13 @@ export declare class SimpleBackgroundManager {
     launch(input: LaunchInput): Promise<BackgroundTask>;
     private startTask;
     private startPolling;
-    private pollTasks;
+    handleEvent(event: any): void;
+    findBySession(sessionID: string): BackgroundTask | undefined;
     private processQueue;
     getTask(id: string): BackgroundTask | undefined;
     getAllTasks(): BackgroundTask[];
     getRunningTasks(): BackgroundTask[];
     getQueuedTasks(): BackgroundTask[];
-    private sendAllIdleNotification;
+    private sendTaskCompletionNotification;
 }
 //# sourceMappingURL=manager.d.ts.map

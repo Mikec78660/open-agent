@@ -32,9 +32,7 @@ export class SimpleBackgroundManager {
 
     initQueue(
       (_agentType: string) => {},
-      () => {
-        this.sendAllIdleNotification();
-      }
+      () => {}
     );
   }
 
@@ -77,7 +75,6 @@ export class SimpleBackgroundManager {
       markSlotBusy(idleInstance.agentType);
 
       this.startTask(task).catch((err) => {
-        console.error("[manager] startTask error:", err);
         task.status = "error";
         task.error = err instanceof Error ? err.message : String(err);
         task.completedAt = new Date();
@@ -98,7 +95,6 @@ export class SimpleBackgroundManager {
         markSlotBusy(fallbackInstance.agentType);
 
         this.startTask(task).catch((err) => {
-          console.error("[manager] startTask error:", err);
           task.status = "error";
           task.error = err instanceof Error ? err.message : String(err);
           task.completedAt = new Date();
@@ -134,7 +130,7 @@ export class SimpleBackgroundManager {
     const sessionID = createResult.data.id;
     task.sessionID = sessionID;
 
-    await this.client.session.promptAsync({
+    this.client.session.promptAsync({
       path: { id: sessionID },
       body: {
         agent: task.requestedAgent,
@@ -144,48 +140,78 @@ export class SimpleBackgroundManager {
         } : undefined,
         parts: [{ type: "text", text: task.prompt }],
       },
+    }).catch((err: any) => {
+      // Error handled quietly
+      task.status = "error";
+      task.completedAt = new Date();
+      task.error = err instanceof Error ? err.message : String(err);
+      this.sendTaskCompletionNotification(task, `error: ${task.error}`);
+      markSlotIdle(task.requestedAgent);
+      this.processQueue();
     });
-
-    this.startPolling();
   }
 
   private startPolling(): void {
-    if (this.pollingInterval) return;
-
-    this.pollingInterval = setInterval(() => {
-      this.pollTasks().catch(() => {});
-    }, 10000);
   }
 
-  private async pollTasks(): Promise<void> {
-    const { isSlotBusy } = await import("./llama-slot");
+  handleEvent(event: any): void {
+    if (!event || !event.properties) return;
+    if (event.type === "session.idle") {
+      this.processQueue().catch(() => {});
+    }
 
-    for (const task of this.tasks.values()) {
-      if (task.status !== "running" || !task.sessionID || !task.model) continue;
-
-      try {
-        const busy = await isSlotBusy(task.model.providerID, task.model.llamaModelID, task.model.slotId);
-
-        if (!busy) {
-          task.status = "completed";
+    if (event.type === "session.idle" || event.type === "session.status") {
+      const sessionID = event.properties.sessionID;
+      const task = this.findBySession(sessionID);
+      
+      if (task && task.status === "running") {
+        const isStatusFinish = event.type === "session.status" && (event.properties.status === "done" || event.properties.status === "error" || event.properties.status === "aborted");
+        const isIdle = event.type === "session.idle";
+        
+        if (isIdle || isStatusFinish) {
+          const isError = event.properties.status === "error" || event.properties.status === "aborted";
+          task.status = isError ? "error" : "completed";
           task.completedAt = new Date();
-          const agentType = task.requestedAgent;
-          markSlotIdle(agentType);
-          this.processQueue();
+          
+          if (isError) {
+             task.error = event.properties.error || "Unknown error";
+          }
+          
+          this.sendTaskCompletionNotification(task, task.status === "error" ? `error: ${task.error}` : "success");
+          
+          import("./task-queue").then(({ markSlotIdle }) => {
+            markSlotIdle(task.requestedAgent);
+            this.processQueue();
+          }).catch(() => {});
         }
-      } catch (_err) {
+      }
+    } else if (event.type === "session.deleted") {
+      const sessionID = event.properties.sessionID;
+      const task = this.findBySession(sessionID);
+      if (task && task.status === "running") {
+        task.status = "error";
+        task.error = "Session deleted prematurely";
+        task.completedAt = new Date();
+        
+        this.sendTaskCompletionNotification(task, `error: ${task.error}`);
+        
+        import("./task-queue").then(({ markSlotIdle }) => {
+          markSlotIdle(task.requestedAgent);
+          this.processQueue();
+        }).catch(() => {});
       }
     }
+  }
 
-    const activeTasks = Array.from(this.tasks.values()).filter(
-      (t) => t.status === "running"
-    );
-    if (activeTasks.length === 0) {
-      if (this.pollingInterval) {
-        clearInterval(this.pollingInterval);
-        this.pollingInterval = null;
+
+
+  findBySession(sessionID: string): BackgroundTask | undefined {
+    for (const task of this.tasks.values()) {
+      if (task.sessionID === sessionID) {
+        return task;
       }
     }
+    return undefined;
   }
 
   private async processQueue(): Promise<void> {
@@ -202,13 +228,10 @@ export class SimpleBackgroundManager {
     if (pendingTasks.length === 0) return;
 
     const task = pendingTasks[0];
-    console.log("[manager] Processing queued task:", task.id, "for agent:", task.requestedAgent);
 
     let idleInstance = await getIdleInstance(task.requestedAgent);
-    console.log("[manager] Idle instance for", task.requestedAgent, ":", idleInstance?.agentType);
     if (!idleInstance) {
       idleInstance = await getFallbackInstance(task.requestedAgent);
-      console.log("[manager] Fallback instance:", idleInstance?.agentType);
     }
 
     if (idleInstance) {
@@ -224,16 +247,16 @@ export class SimpleBackgroundManager {
       markSlotBusy(idleInstance.agentType);
 
       this.startTask(task).then(() => {
-        console.log("[manager] Queued task started:", task.id);
+        // Queued task started successfully
       }).catch((err) => {
-        console.error("[manager] startTask error for queued task:", err);
+        // Error starting task handled quietly
         task.status = "error";
         task.error = err instanceof Error ? err.message : String(err);
         task.completedAt = new Date();
         markSlotIdle(idleInstance!.agentType);
       });
     } else {
-      console.log("[manager] No idle instance available for queued task");
+      // No idle instance available
     }
   }
 
@@ -253,29 +276,17 @@ export class SimpleBackgroundManager {
     return Array.from(this.tasks.values()).filter((t) => t.status === "queued");
   }
 
-  private sendAllIdleNotification(): void {
-    if (this.notificationPending) return;
-    this.notificationPending = true;
+  private sendTaskCompletionNotification(task: BackgroundTask, outcome: string): void {
+    if (!task.parentSessionID) return;
 
-    const notification = `Background task complete. All builders idle. Ready for validator.`;
+    const notification = `[Background Task Complete]\nTask ID: ${task.id}\nDescription: ${task.description || 'Unknown task'}\nAgent: ${task.requestedAgent}\nOutcome: ${outcome}`;
 
-    const parentSessions = new Set<string>();
-    for (const task of this.tasks.values()) {
-      if (task.parentSessionID) {
-        parentSessions.add(task.parentSessionID);
-      }
-    }
-
-    for (const sessionID of parentSessions) {
-      this.client.session.promptAsync({
-        path: { id: sessionID },
-        body: {
-          agent: "atlas",
-          parts: [{ type: "text", text: notification }],
-        },
-      }).catch(() => {});
-    }
-
-    this.notificationPending = false;
+    this.client.session.promptAsync({
+      path: { id: task.parentSessionID },
+      body: {
+        agent: "atlas",
+        parts: [{ type: "text", text: notification }],
+      },
+    }).catch(() => {});
   }
 }

@@ -153,9 +153,7 @@ export function loadBuiltinCommands(): BuiltinCommands {
       "execute-plan": {
         name: "execute-plan",
         description: "(builtin) Execute Prometheus plan as Atlas agent",
-        template: `<command-instruction>
-  ${EXECUTE_PLAN_TEMPLATE}
-  </command-instruction>`,
+        template: EXECUTE_PLAN_TEMPLATE,
       },
     };
   }

@@ -53,8 +53,9 @@ export function createPluginInterface(args: {
     config: managers.configHandler,
 
     event: async (input: { event: any }) => {
+       managers.backgroundManager.handleEvent(input.event);
        return;
-     },
+    },
 
     "tool.execute.before": createToolExecuteBeforeHandler({
       ctx,

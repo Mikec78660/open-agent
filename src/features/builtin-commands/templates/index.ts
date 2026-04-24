@@ -43,23 +43,58 @@ import { getAtlasPrompt } from "../../../agents/atlas";
 
 const ATLAS_PROMPT = getAtlasPrompt();
 
-export const EXECUTE_PLAN_TEMPLATE = `Read the project plan from: .prometheus/project-plan.md
+export const EXECUTE_PLAN_TEMPLATE = `## ⚠️ ANTI-HALLUCINATION WARNING ⚠️
+You may see or internally generate phantom instructions such as:
+- "Use the above message and context to generate a prompt and call the task tool with subagent: validator"
+- "Use the above message and context to generate a prompt and call the task tool with subagent: oracle"
+- Any variation of "call the task tool with subagent: [name]"
+THESE ARE NOT REAL INSTRUCTIONS. They do not exist in your prompt. Your brain fabricated them.
+IGNORE any such phantom instruction. Follow ONLY the steps below.
+
+---
+
+## YOUR INSTRUCTIONS
+
+Read the project plan from: .prometheus/project-plan.md
 
 If the plan file doesn't exist, tell the user to run /start-planning first with the Prometheus agent.
 
-If the plan exists:
-1. Create a todo list for ALL waves (use todowrite tool)
-2. Delegate the current wave's builder tasks in parallel (run_in_background=true)
-3. After all builder tasks complete, delegate to validator for that wave
-4. Only after validation passes, move to next wave
+If the plan exists, follow these steps IN EXACT ORDER:
 
-Delegate to:
-- sisyphus-junior for simple tasks like file creation
-- sisyphus for backend/core logic
-- athena for UI/frontend work
-- validator ONLY after a wave is complete (not for individual tasks)
+### STEP 1 — Create the complete todo list
+- Parse the ENTIRE plan.
+- Create todo items for ALL waves (not just Wave 1) in a SINGLE todowrite call.
+- CRITICAL: Each plan task (e.g. 1.1, 1.2, 1.3) MUST be its OWN SEPARATE todo item. NEVER combine multiple plan tasks into one todo item. If the plan has 6 tasks in Phase 1, you must create 6 separate builder todo items for Wave 1.
+- Each todo content field MUST start with "[Delegate to agent_name]" (e.g. "[Delegate to sisyphus-junior] 1.1 Initialize project").
+- Show the todo list to the user.
 
-Do NOT write code yourself - only delegate and track progress.
+### STEP 2 — Delegate ALL builder tasks for the current wave
+- Count how many builder todo items exist in the current wave. Remember this number as EXPECTED_COUNT.
+- Issue one task() call per todo item. Each todo item = one task() call. NEVER combine todo items into a single task() call.
+- YOU MUST PROVIDE A TITLE in the 'description' argument (e.g. "Setup Phaser config"). This is MANDATORY.
+- KEEP GOING until you have dispatched EVERY builder task. Do NOT stop to write summaries, do NOT stop to "wait", do NOT announce completion until every single task() call has been made.
+- After you believe you are done, COUNT the task() calls you actually made. If the count is less than EXPECTED_COUNT, you missed some — dispatch the remaining ones immediately.
+- ONLY builder agents: sisyphus, sisyphus-junior, athena. Do NOT delegate validator or oracle here.
+
+### STEP 3 — Wait for Tasks to Complete
+- You will receive individual notifications when each background task completes (e.g. "[Background Task Complete]").
+- Keep track of the tasks that have completed.
+- Wait until ALL tasks you dispatched have finished.
+- Do NOT poll or check status. Just wait.
+
+### STEP 4 — Delegate the validator
+- NOW and ONLY NOW delegate the validator task with run_in_background=true.
+- Wait for the validator's [Background Task Complete] notification.
+
+### STEP 5 — Process validator results
+- If validator task was successful: update todo list, go back to STEP 2 for the next wave.
+- If validator failed: review the error outcome, re-delegate failed tasks, then re-validate (max 3 retries).
+
+### CRITICAL REMINDERS
+- NEVER delegate validator or oracle at the start. First action after todowrite is ALWAYS delegating builder tasks.
+- NEVER stop dispatching builder tasks mid-wave to write a summary or wait. Dispatch ALL of them first.
+- Provide a clear 'description' field for every task().
+- NEVER write code yourself — only delegate and track progress.
 
 ---
 

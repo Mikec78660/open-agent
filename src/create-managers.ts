@@ -39,15 +39,19 @@ export function createConfigHandler(args: {
   };
 }
 
+import type { SimpleBackgroundManager } from "./tools/delegate-task/manager";
+
 export type Managers = {
   configHandler: ReturnType<typeof createConfigHandler>;
+  backgroundManager: SimpleBackgroundManager;
 };
 
 export function createManagers(args: {
   ctx: PluginContext;
   pluginConfig: OpenAgentConfig;
+  backgroundManager: SimpleBackgroundManager;
 }): Managers {
-  const { ctx, pluginConfig } = args;
+  const { ctx, pluginConfig, backgroundManager } = args;
 
   const configHandler = createConfigHandler({
     ctx: ctx,
@@ -56,5 +60,6 @@ export function createManagers(args: {
 
   return {
     configHandler,
+    backgroundManager,
   };
 }

@@ -25,8 +25,9 @@ export type CreateToolsResult = {
 export async function createTools(args: {
   ctx: PluginContext;
   pluginConfig: OpenAgentConfig;
+  backgroundManager: SimpleBackgroundManager;
 }): Promise<CreateToolsResult> {
-  const { ctx, pluginConfig } = args;
+  const { ctx, pluginConfig, backgroundManager } = args;
 
   log("[createTools] Creating tools...");
 
@@ -36,8 +37,7 @@ export async function createTools(args: {
   // Discover all commands for the skill tool (used for / dropdown)
   const discoveredCommands = discoverCommandsSync(ctx.directory);
 
-  // Create background manager for task delegation
-  const backgroundManager = new SimpleBackgroundManager(ctx);
+  // Background manager for task delegation is provided via args
 
   // Create delegate task tool with background support
   const delegateTaskTool = createDelegateTask(backgroundManager);

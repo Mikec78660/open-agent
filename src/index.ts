@@ -16,6 +16,7 @@ import { createPluginInterface } from "./plugin-interface";
 import { createTools } from "./create-tools";
 import { createHooks } from "./create-hooks";
 import { createManagers } from "./create-managers";
+import { SimpleBackgroundManager } from "./tools/delegate-task/manager";
 
 import { loadPluginConfig } from "./config/loader";
 import type { PluginContext } from "./plugin/types";
@@ -23,7 +24,6 @@ import type { OpenAgentConfig } from "./config/schema/open-agent-config";
 
 const OpenAgentPlugin = async (ctx: PluginContext) => {
   const config = loadPluginConfig(ctx.directory);
-  console.log("[open-agent] Loaded config:", JSON.stringify(config, null, 2));
 
   const agents: Record<string, any> = {
     sisyphus: createSisyphusAgent("anthropic/claude-sonnet-4-6"),
@@ -56,11 +56,14 @@ const OpenAgentPlugin = async (ctx: PluginContext) => {
     }
   }
 
-  const managers = createManagers({ ctx, pluginConfig: config });
+  const backgroundManager = new SimpleBackgroundManager(ctx);
+
+  const managers = createManagers({ ctx, pluginConfig: config, backgroundManager });
 
   const toolsResult = await createTools({
     ctx,
     pluginConfig: config,
+    backgroundManager,
   });
 
   const hooks = createHooks({
